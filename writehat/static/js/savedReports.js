@@ -7,6 +7,32 @@ function saveState() {
   localStorage.setItem("status", JSON.stringify(status));
 }
 
+function triggerImport(importUrl, redirectUrl) {
+  var input = $('<input type="file" accept=".json" style="display:none">');
+  $("body").append(input);
+  input.on("change", function () {
+    var file = this.files[0];
+    if (!file) return;
+    var formData = new FormData();
+    formData.append("file", file);
+    $.ajax({
+      url: importUrl,
+      method: "POST",
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function () {
+        successRedirect(redirectUrl, "Successfully imported");
+      },
+      error: function (xhr) {
+        error("Import failed: " + (xhr.responseText || "unknown error"));
+      },
+    });
+    input.remove();
+  });
+  input.click();
+}
+
 $(document).ready(function() {
 
   if (localStorage.getItem("status")) {
@@ -40,16 +66,38 @@ $(document).ready(function() {
     return selected_status && searched_name
 
   });
-  
+
   var table = $('#reports').DataTable();
-  
+
   // Bind the change event handler
   $('#status-radio').change(function() {
     saveState();
       table.draw();
   });
-  
+
   // Trigger the change event to set the filter active by default
   $('#status-radio').trigger('change');
+
+  // Export report template
+  $('.writehat-reports').on('click', '.reportTemplateExport', function(e) {
+    var reportID = $(e.currentTarget).closest('tr').attr('report-id');
+    window.location.href = `/templates/export/${reportID}`;
+  });
+
+  // Import report template
+  $('#reportTemplateImport').click(function() {
+    triggerImport('/templates/import', '/templates');
+  });
+
+  // Export page template
+  $('#writehat-pagetemplates').on('click', '.pageTemplateExport', function(e) {
+    var pageID = $(e.currentTarget).closest('tr').attr('page-id');
+    window.location.href = `/pages/export/${pageID}`;
+  });
+
+  // Import page template
+  $('#pageTemplateImport').click(function() {
+    triggerImport('/pages/import', '/templates');
+  });
 
 });

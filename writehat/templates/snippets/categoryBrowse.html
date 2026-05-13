@@ -1,7 +1,7 @@
 {% for categoryID, category in findingsTree.items %}
 
   <div class="p-0 category" category-name="{{ category.name }}" category-id="{{ categoryID }}">
-    
+
     <div class="d-flex m-1 p-0 text-left text-white btn btn-sm font-weight-bold" style="width: 100%;background-color:black;border: 1px solid #444">
 
       <div class="d-flex p-1 mr-auto {% if not category.categoryChildren and not category.findings %}text-dark{% endif %}" data-toggle="collapse" data-target="#contents_{{ categoryID }}" aria-expanded="true" aria-controls="contents_{{ categoryID }}" style="width:100%;background-color:transparent;cursor:pointer">
@@ -20,7 +20,7 @@
         {% endif %}
       </div>
     </div>
-    
+
 
     <div class="pl-3 text-dark collapse show" id="contents_{{ categoryID }}">
 

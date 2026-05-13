@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block headerRight %}
+  {% include 'snippets/textButton.html' with id='customerImport' name='Import' type='upload' class='btn-secondary text-light' %}
   {% include 'snippets/textButton.html' with id='customerNew' name='New Customer' type='plus' class='btn-yellow text-light' %}
 {% endblock %}
 
@@ -44,6 +45,7 @@
             </td>
             <td>
               <div class="floating float-right vertical-align-center mt-1">
+                {% include 'snippets/smallButton.html' with title='Export Customer' type='download' class='text-success customerExport' %}
                 {% include 'snippets/smallButton.html' with title='Delete Customer' type='times-circle' class='text-danger customerListDelete' %}
               </div>
             </td>

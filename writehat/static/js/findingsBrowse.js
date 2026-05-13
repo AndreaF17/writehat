@@ -78,14 +78,14 @@ $(document).on('modalLoaded-categoryAdd', function(e, modalDiv) {
     }
 
     // don't do anything if there's no name
-    if (! newCategoryName.length ) 
+    if (! newCategoryName.length )
     {
       error('Please specify a category name');
       return;
     }
 
     $.ajax({
-      url: '/findings/category/add', 
+      url: '/findings/category/add',
       type: 'POST',
       data: {
         'categoryName': newCategoryName,

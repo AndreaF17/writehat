@@ -1,39 +1,66 @@
-@media print { 
-    @page :first {
-        @bottom-right-corner {
-            content: none;
-        }
-        @top-center {
-            content: none;
-        }
+/* Page size for both paged.js preview (screen) and browser print */
+@page {
+    size: letter portrait;
+    margin: 0.5in 0.5in 1.0in 0.5in;
+
+    @bottom-right-corner {
+        content: counter(page);
     }
 
-    @page {
-        @bottom-right-corner {
-            content: counter(page);
-        }
-
-        @top-center {
-            content: element(headerContent);
-            white-space: pre-wrap;
-            text-align: center;
-            font-size: 10pt !important;
-        }
-
-        @bottom-center {
-            content: element(footerContent);
-            white-space: pre-wrap;
-            text-align: center;
-            font-size: 10pt !important;
-        }
-
-        background-position: center center;
-        background-repeat: no-repeat;
-
-        margin: 0.5in 0.5in 1.0in 0.5in;
+    @top-center {
+        content: element(headerContent);
+        white-space: pre-wrap;
+        text-align: center;
+        font-size: 10pt !important;
     }
 
-    .page-break { 
+    @bottom-center {
+        content: element(footerContent);
+        white-space: pre-wrap;
+        text-align: center;
+        font-size: 10pt !important;
+    }
+}
+
+@page :first {
+    @bottom-right-corner {
+        content: none;
+    }
+    @top-center {
+        content: none;
+    }
+}
+
+@page {
+  @footnote {
+    float: bottom;
+  }
+}
+
+@media print {
+    /* Preserve all background colors and images when printing */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Each paged.js virtual page maps to exactly one browser print page */
+    .pagedjs_page {
+        page-break-after: always;
+        break-after: page;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* Flatten the screen flex layout so each page prints as a block */
+    .pagedjs_pages {
+        display: block !important;
+        width: auto !important;
+        transform: none !important;
+        margin: 0 !important;
+    }
+
+    .page-break {
         break-before: page;
     }
 
@@ -56,16 +83,16 @@ div.header-content {
     position: running(headerContent);
 }
 
-.center { 
+.center {
     text-align: center;
 }
 
-.justify, div.markdown-align-justify > p { 
+.justify, div.markdown-align-justify > p {
     text-align: justify;
 }
 
 .red {
-    color: red; 
+    color: red;
 }
 
 .bold {
@@ -81,7 +108,7 @@ div.header-content {
   counter-increment: figureNumber;
 }
 
-figcaption span.figure-counter::before { 
+figcaption span.figure-counter::before {
     content: counter(figureNumber);
 }
 
@@ -118,12 +145,6 @@ a.reference-link {
 
 .footnote {
   float: footnote;
-}
-
-@page {
-  @footnote {
-    float: bottom;
-  }
 }
 
 table[data-split-from] thead a.footnote {

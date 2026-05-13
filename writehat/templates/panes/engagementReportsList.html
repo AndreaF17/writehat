@@ -30,7 +30,6 @@
           <td><a href="/engagements/report/{{ report.id }}/edit">{{ report.status|title }}</a></td>
           <td>
             <div class="floating float-right vertical-align-center mt-1">
-              {% include 'snippets/smallButton.html' with title='Generate PDF' type='file-pdf' class='reportGeneratePDF engagement-reports text-white' attrs='style="border: 2px solid var(--danger)"' %}
               {% include 'snippets/smallButton.html' with title='Generate HTML' type='file-code' class='reportGenerateHTML engagement-reports text-white' attrs='style="border: 2px solid var(--warning)"' %}
               {% include 'snippets/smallButton.html' with title='Clone Report' type='copy' class='reportClone text-white' %}
               {% include 'snippets/smallButton.html' with title='Edit Report' type='pen' class='reportEdit text-dark' %}

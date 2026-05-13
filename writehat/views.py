@@ -1,9 +1,11 @@
 # May Odyn smile on your Chain and Thorim empower your Chomp
 
+import re
 import json
 import base64
 import logging
 import uuid as uuidlib
+from datetime import datetime
 
 # django
 from django.conf import settings
@@ -44,14 +46,6 @@ from writehat.lib.pageTemplate import *
 from writehat.lib.findingCategory import *
 from writehat.lib.engagementFinding import *
 from writehat.lib.excel import generateExcel
-
-
-# Selenium
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions
-from selenium.common.exceptions import InvalidCookieDomainException, TimeoutException
 
 
 
@@ -673,83 +667,6 @@ def reportGenerate(request,uuid):
         response = HttpResponse(report.render(), content_type='text/html; charset=utf-8')
         return response 
 
-@csrf_protect
-@require_http_methods(['POST', 'GET'])
-# GET the report ID from the URL
-def reportGeneratePdf(request,uuid):
-    '''
-    Render/preview a Report, SavedReport, or Component directly to PDF
-    '''
-
-    try:
-        report = Report.get(id=uuid)
-    except Report.DoesNotExist:
-        report = SavedReport.get(id=uuid)
-
-    # These two arguments are required for Chrome's PrintToPDF to function
-    # NOTE: --no-sandbox and --disable-dev-shm-usage are only needed when running in Docker
-    ch = webdriver.ChromeOptions()
-    for a in ['--disable-extensions', '--headless', '--no-sandbox',
-            '--disable-dev-shm-usage', '--ignore-certificate-errors',
-            '--allow-running-insecure-content']:
-        ch.add_argument(a)
-    
-    # Connect to Chrome with the specified arguments
-    browser = webdriver.Remote(command_executor="http://chrome:4444/wd/hub", options=ch)
-
-    # Navigate to /login first to set the request's domain; otherwise, setting 
-    # the cookie will fail 
-    uri_base = "https://nginx"
-    login_uri = f"{uri_base}/login"
-    log.debug(f"login_uri: {login_uri}")
-    browser.get(login_uri)
-
-    cookie = request.COOKIES.get("sessionid")
-    cookie_dict = {'name': 'sessionid', 'value': cookie}
-    log.debug(f"cookie_dict: {cookie_dict}")
-
-    try:
-        browser.add_cookie(cookie_dict)
-        log.debug("added clookie")
-    except InvalidCookieDomainException:
-        log.debug("Got InvalidCookieDomainException")
-        pass
-
-    uri_path = request.path.replace("/generatePdf", "/generate")
-    uri = f"{uri_base}/{uri_path}"
-    log.debug(f"Requesting uri: {uri}")
-    browser.get(uri)
-
-    try:
-        # Wait for page to finish rendering, assuming less than one minute
-        log.debug("Waiting for request to finish")
-        timeout = getattr(settings, "SELENIUM_TIMEOUT", 120)
-        WebDriverWait(browser, timeout).until(expected_conditions.presence_of_element_located((By.ID, "finished_loading")))
-    except TimeoutException as e:
-        log.debug(f"Timeout of {timeout} seconds exceeded when attempting to render report with id {report.id} to PDF")
-        messages.add_message(request, messages.ERROR, "PDF took too long to render! Please contact a web administrator for more information")
-        return redirect(f"/engagements/report/{report.id}/edit", uuid=report.id)
-    finally:
-        # Send request to Selenium to call Page.printToPDF
-        log.debug("Finished loading")
-        resource = f"/session/{browser.session_id}/chromium/send_command_and_get_result"
-        url = f"{browser.command_executor._url}{resource}"
-        body = json.dumps({'cmd': 'Page.printToPDF', 'params': {'printBackground': True}})
-        response = browser.command_executor._request('POST', url, body)
-
-        # Display browser logs
-        log.debug("Selenium logs:")
-        log.debug(browser.get_log("driver"))
-        log.debug(browser.get_log("browser"))
-
-        # Close the browser
-        browser.quit()
-
-    # Base64-decode PDF response and render to HttpResponse
-    response = HttpResponse(base64.b64decode(response.get('value').get('data')), content_type='application/pdf')
-    response['Content-Disposition'] = 'inline; filename="{}.pdf"'.format(report.name.replace('"', ''))
-
-    return response
 
 # load the new database finding form with the cvss form
 def findingCvssNew(request):
@@ -1890,6 +1807,238 @@ def pageClone(request, uuid):
     return HttpResponse(clonedPage.id)
 
 
+
+
+
+# ----- Export / Import -----
+
+def _serialize_mongo_doc(doc):
+    result = {}
+    for k, v in doc.items():
+        if isinstance(v, uuidlib.UUID):
+            result[k] = str(v)
+        elif isinstance(v, datetime):
+            result[k] = v.isoformat()
+        elif isinstance(v, dict):
+            result[k] = _serialize_mongo_doc(v)
+        elif isinstance(v, list):
+            result[k] = [
+                _serialize_mongo_doc(i) if isinstance(i, dict)
+                else str(i) if isinstance(i, uuidlib.UUID)
+                else i for i in v
+            ]
+        else:
+            result[k] = v
+    return result
+
+
+def _tree_uuids(tree):
+    for node in tree:
+        yield str(node['uuid'])
+        if 'children' in node and node['children']:
+            yield from _tree_uuids(node['children'])
+
+
+def _import_component_tree(tree, component_data, new_report_id):
+    new_tree = []
+    for node in tree:
+        old_uuid = str(node.get('uuid', ''))
+        new_uuid = uuidlib.uuid4()
+        new_node = {'type': node['type'], 'uuid': new_uuid}
+
+        if old_uuid in component_data:
+            doc = dict(component_data[old_uuid])
+            doc['_id'] = new_uuid
+            doc['reportParent'] = new_report_id
+            if doc.get('databaseParent'):
+                try:
+                    doc['databaseParent'] = uuidlib.UUID(str(doc['databaseParent']))
+                except (ValueError, AttributeError):
+                    doc['databaseParent'] = None
+            settings.MONGO_DB['report_components'].replace_one({'_id': new_uuid}, doc, upsert=True)
+
+        if 'children' in node and node['children']:
+            new_node['children'] = _import_component_tree(node['children'], component_data, new_report_id)
+
+        new_tree.append(new_node)
+    return new_tree
+
+
+def _safe_filename(name, fallback='export'):
+    return re.sub(r'[^\w\-_]', '_', name or fallback) + '.json'
+
+
+# Report Template Export
+@login_required
+@require_http_methods(['GET'])
+def templateExport(request, uuid):
+    try:
+        report = SavedReport.objects.get(id=uuid)
+    except SavedReport.DoesNotExist:
+        return HttpResponse('Template not found', status=404)
+
+    try:
+        component_tree = json.loads(report._components) if report._components else []
+    except json.JSONDecodeError:
+        component_tree = []
+
+    component_data = {}
+    for comp_uuid_str in _tree_uuids(component_tree):
+        try:
+            comp_uuid = uuidlib.UUID(comp_uuid_str)
+            doc = settings.MONGO_DB['report_components'].find_one({'_id': comp_uuid})
+            if doc is None:
+                doc = settings.MONGO_DB['components'].find_one({'_id': comp_uuid})
+            if doc:
+                component_data[comp_uuid_str] = _serialize_mongo_doc(doc)
+        except Exception:
+            pass
+
+    export_data = {
+        'type': 'report_template',
+        'version': '1.0',
+        'name': report.name,
+        'status': report.status,
+        'pageTemplateID': str(report.pageTemplateID) if report.pageTemplateID else None,
+        'component_tree': component_tree,
+        'component_data': component_data,
+    }
+
+    response = HttpResponse(json.dumps(export_data, indent=2), content_type='application/json')
+    response['Content-Disposition'] = f'attachment; filename="{_safe_filename(report.name)}"'
+    return response
+
+
+# Report Template Import
+@login_required
+@csrf_protect
+@require_http_methods(['POST'])
+def templateImport(request):
+    if 'file' not in request.FILES:
+        return HttpResponse('Missing file', status=400)
+    try:
+        data = json.loads(request.FILES['file'].read())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return HttpResponse('Invalid JSON file', status=400)
+
+    if data.get('type') != 'report_template':
+        return HttpResponse('Invalid file type: expected report_template', status=400)
+
+    new_report = SavedReport()
+    new_report.name = escape(data.get('name', 'Imported Template'))
+    new_report.status = data.get('status', 'active')
+    new_report.save()
+
+    component_tree = data.get('component_tree', [])
+    component_data = data.get('component_data', {})
+    new_tree = _import_component_tree(component_tree, component_data, new_report.id)
+    new_report._components = json.dumps(new_tree, cls=UUIDEncoder)
+    new_report.save()
+
+    return HttpResponse(new_report.id)
+
+
+# Page Template Export
+@login_required
+@require_http_methods(['GET'])
+def pageExport(request, uuid):
+    try:
+        page = PageTemplate.objects.get(id=uuid)
+    except PageTemplate.DoesNotExist:
+        return HttpResponse('Page template not found', status=404)
+
+    export_data = {
+        'type': 'page_template',
+        'version': '1.0',
+        'name': page.name,
+        'header': page.header or '',
+        'footer': page.footer or '',
+    }
+
+    response = HttpResponse(json.dumps(export_data, indent=2), content_type='application/json')
+    response['Content-Disposition'] = f'attachment; filename="{_safe_filename(page.name)}"'
+    return response
+
+
+# Page Template Import
+@login_required
+@csrf_protect
+@require_http_methods(['POST'])
+def pageImport(request):
+    if 'file' not in request.FILES:
+        return HttpResponse('Missing file', status=400)
+    try:
+        data = json.loads(request.FILES['file'].read())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return HttpResponse('Invalid JSON file', status=400)
+
+    if data.get('type') != 'page_template':
+        return HttpResponse('Invalid file type: expected page_template', status=400)
+
+    page = PageTemplate()
+    page.name = escape(data.get('name', 'Imported Page Template'))
+    page.header = data.get('header', '')
+    page.footer = data.get('footer', '')
+    page.default = False
+    page.save()
+
+    return HttpResponse(page.id)
+
+
+# Customer Export
+@login_required
+@require_http_methods(['GET'])
+def customerExport(request, uuid):
+    try:
+        customer = Customer.objects.get(id=uuid)
+    except Customer.DoesNotExist:
+        return HttpResponse('Customer not found', status=404)
+
+    export_data = {
+        'type': 'customer',
+        'version': '1.0',
+        'name': customer.name or '',
+        'shortName': customer.shortName or '',
+        'domain': customer.domain or '',
+        'website': customer.website or '',
+        'address': customer.address or '',
+        'POC': customer.POC or '',
+        'email': customer.email or '',
+        'phone': customer.phone or '',
+    }
+
+    response = HttpResponse(json.dumps(export_data, indent=2), content_type='application/json')
+    response['Content-Disposition'] = f'attachment; filename="{_safe_filename(customer.name, "customer")}"'
+    return response
+
+
+# Customer Import
+@login_required
+@csrf_protect
+@require_http_methods(['POST'])
+def customerImport(request):
+    if 'file' not in request.FILES:
+        return HttpResponse('Missing file', status=400)
+    try:
+        data = json.loads(request.FILES['file'].read())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return HttpResponse('Invalid JSON file', status=400)
+
+    if data.get('type') != 'customer':
+        return HttpResponse('Invalid file type: expected customer', status=400)
+
+    customer = Customer()
+    customer.name = escape(data.get('name', 'Imported Customer'))
+    customer.shortName = data.get('shortName', '')
+    customer.domain = data.get('domain', '')
+    customer.website = data.get('website', '')
+    customer.address = data.get('address', '')
+    customer.POC = data.get('POC', '')
+    customer.email = data.get('email', '')
+    customer.phone = data.get('phone', '')
+    customer.save()
+
+    return HttpResponse(customer.id)
 
 
 # Admin tools

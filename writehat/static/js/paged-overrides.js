@@ -27,7 +27,6 @@ class ElementCleaner extends Paged.Handler {
     }
 
     afterParsed(parsed) {
-        $("#report-body > div.pagedjs_pages").css("justify-content", "center");
     }
 
     afterPageLayout(pageElement, page, breakToken) {
@@ -47,22 +46,29 @@ class ElementCleaner extends Paged.Handler {
     afterRendered(pages) {
         for (let i = 0; i < pages.length; i++) {
             let page = $(pages[i].element)
-            let split_to = page.find('.finding-content[data-split-to]')
+            let splits = page.find(".finding-content[data-split-to]");
 
-            if (split_to.length > 0) {
-                let body = split_to.find('.finding-content-body')
-                let header = split_to.find('.finding-content-header')
+            if (splits.length > 0 && i + 1 < pages.length) {
+              let next_page = $(pages[i + 1].element);
 
-                let split_id = split_to.attr('data-split-to')
-                let next_page = $(pages[i + 1].element)
+              splits.each(function () {
+                let split_to = $(this);
+                let body = split_to.find(".finding-content-body");
+                let header = split_to.find(".finding-content-header");
+                let split_id = split_to.attr("data-split-to");
 
-                let split_from = next_page.find(`.finding-content[data-split-from='${split_id}']`)
+                let split_from = next_page.find(
+                  `.finding-content[data-split-from='${split_id}']`,
+                );
 
-                split_from.prepend(header.clone())
-
-                if (body.text().length == 0) {
-                    split_to.remove()
+                if (split_from.length > 0) {
+                  split_from.prepend(header.clone());
                 }
+
+                if (body.text().trim().length == 0) {
+                  split_to.remove();
+                }
+              });
             }
         }
 

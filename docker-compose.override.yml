@@ -1,0 +1,15 @@
+services:
+  nginx:
+    command: /bin/sh -c "rm -f /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+
+  writehat:
+    command: bash -c "
+      sleep 2 &&
+      ./manage.py makemigrations writehat &&
+      ./manage.py migrate writehat &&
+      ./manage.py makemigrations &&
+      ./manage.py migrate &&
+      uwsgi --socket 0.0.0.0:8000 --plugin-dir=/usr/lib/uwsgi/plugins --plugin python3 -w writehat.wsgi:application --processes=2 --master --vacuum --py-autoreload 1"
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1

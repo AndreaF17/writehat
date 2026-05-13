@@ -5,6 +5,7 @@
     </div>
     <div class='ml-auto'>
       {% include 'snippets/statusButtonGroup.html' %}
+      {% include 'snippets/textButton.html' with id='reportTemplateImport' name='Import' type='upload' class='btn-secondary' %}
       {% include 'snippets/textButton.html' with href='/templates/new' name='New Report Template' type='plus' class='btn-primary' %}
     </div>
   </div>
@@ -30,6 +31,7 @@
           <td class="reportEdit" style="cursor:pointer">{{ report.status|title }}</td>
           <td>
             <div class="floating float-right mt-1">
+              {% include 'snippets/smallButton.html' with title='Export Template' type='download' class='reportTemplateExport text-success' %}
               {% include 'snippets/smallButton.html' with title='Clone Report' type='copy' class='reportClone text-white' %}
               {% include 'snippets/smallButton.html' with title='Edit Report' type='pen' class='reportEdit text-dark' %}
               {% include 'snippets/smallButton.html' with title='Delete Report' type='times-circle' class='reportDelete text-danger' %}

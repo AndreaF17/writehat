@@ -157,11 +157,6 @@ $(document).ready(function() {
     window.open(url, '_blank');
   })
 
-  $('#reportGeneratePdf').click(function() {
-    var url = '/engagements/report/' + reportID + '/generatePdf';
-    window.open(url, '_blank');
-  })
-
   // saveToTemplate button
   $('#saveToTemplate').click(function() {
     $.ajax({url: '/engagements/report/' + reportID + '/saveToTemplate', 

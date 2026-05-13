@@ -55,19 +55,23 @@ urlpatterns = [
     path('templates', views.templatesList),
     path('templates/new', views.templateNew),
     path('templates/create', views.templateCreate),
+    path('templates/import', views.templateImport),
     url(rf'^templates/edit/{uuid}$', views.templateEdit),
     url(rf'^templates/delete/{uuid}$', views.templateDelete),
     url(rf'^templates/update/{uuid}$', views.templateUpdate),
     url(rf'^templates/clone/{uuid}$', views.reportClone),
+    url(rf'^templates/export/{uuid}$', views.templateExport),
 
 
     # page template urls
     path('pages/new', views.pageNew),
     path('pages/create', views.pageCreate),
+    path('pages/import', views.pageImport),
     url(rf'^pages/edit/{uuid}$', views.pageEdit),
     url(rf'^pages/delete/{uuid}$', views.pageDelete),
     url(rf'^pages/update/{uuid}$', views.pageUpdate),
     url(rf'^pages/clone/{uuid}$', views.pageClone),
+    url(rf'^pages/export/{uuid}$', views.pageExport),
 
 
     # revision urls
@@ -112,8 +116,10 @@ urlpatterns = [
     # customer urls
     path('customers', views.customersList),
     path('customers/create', views.customerCreate),
+    path('customers/import', views.customerImport),
     url(rf'^customers/{uuid}/edit$', views.customerEdit),
     url(rf'^customers/{uuid}/delete$', views.customerDelete),
+    url(rf'^customers/{uuid}/export$', views.customerExport),
 
 
     # Component URLS
@@ -130,7 +136,6 @@ urlpatterns = [
     url(rf'^engagements/report/{uuid}/edit$', views.reportEdit),
     url(rf'^engagements/report/{uuid}/status$', views.componentReviewStatus),
     url(rf'^engagements/report/{uuid}/generate$', views.reportGenerate),
-    url(rf'^engagements/report/{uuid}/generatePdf$', views.reportGeneratePdf),
     url(rf'^engagements/report/{uuid}/update$', views.reportUpdate),
     url(rf'^engagements/report/{uuid}/delete$', views.reportDelete),
     url(rf'^engagements/report/{uuid}/saveToTemplate$', views.reportSaveToTemplate),

@@ -109,6 +109,37 @@ $(document).ready(function() {
     deleteCustomer(customerID, customerName);
   })
 
+  $(".customerExport").click(function () {
+    var customerID = $(this).closest("tr").attr("customer-id");
+    window.location.href = `/customers/${customerID}/export`;
+  });
+
+  $("#customerImport").click(function () {
+    var input = $('<input type="file" accept=".json" style="display:none">');
+    $("body").append(input);
+    input.on("change", function () {
+      var file = this.files[0];
+      if (!file) return;
+      var formData = new FormData();
+      formData.append("file", file);
+      $.ajax({
+        url: "/customers/import",
+        method: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function () {
+          successRedirect("/customers", "Customer imported successfully");
+        },
+        error: function (xhr) {
+          error("Import failed: " + (xhr.responseText || "unknown error"));
+        },
+      });
+      input.remove();
+    });
+    input.click();
+  });
+
   $('#customerDelete').click(function() {
     var customerID = $('#customer-info').attr('customer-id');
     var customerName = $('#customer-info').attr('customer-name');

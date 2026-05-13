@@ -2,7 +2,7 @@
 
 /* Change the look */
 :root {
-    --color-background: whitesmoke;
+    --color-background: #808080;
     --color-pageSheet: #cfcfcf;
     --color-pageBox: violet;
     --color-paper: white;
@@ -14,52 +14,25 @@
 
 /* To define how the book look on the screen: */
 @media screen, pagedjs-ignore {
-    body {
+    html, body {
         background-color: var(--color-background);
+        min-height: 100vh;
     }
 
-/*
-      .pagedjs_pages {
-        display: flex;
-        width: calc(var(--pagedjs-width) * 2);
-        flex: 0;
-        flex-wrap: wrap;
-        margin: 0 auto;
-    }  
-*/
-
     .pagedjs_pages {
-      width: calc((var(--width) * 2) + (var(--margin) * 4));
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: flex-start;
-      transform-origin: 0 0;
-      margin: 0 auto;
+        display: block !important;
+        width: 100% !important;
+        padding: 20px 0 !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        transform: none !important;
     }
 
     .pagedjs_page {
         background-color: var(--color-paper);
-        box-shadow: 0 0 0 1px var(--color-pageSheet);
-        margin: 0;
-        flex-shrink: 0;
-        flex-grow: 0;
-        margin-top: 4mm;
-        margin-left: 4mm;
-    }
-
-    .pagedjs_first_page {
-        margin-left: calc(var(--pagedjs-width-right) + 8mm);
-    }
-
-    @media screen and (max-width: 17in), pagedjs-ignore {
-        .pagedjs_first_page {
-            margin-left: 4mm;
-        }
-    } 
-
-    .pagedjs_page:last-of-type {
-        margin-bottom: 10mm;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+        margin: 0 auto 20px auto !important;
+        display: block !important;
     }
 
     .pagedjs_pagebox{
@@ -74,10 +47,10 @@
     .pagedjs_left_page .pagedjs_bleed-right .pagedjs_marks-crop {
         border-color: transparent;
     }
-    
+
     .pagedjs_left_page .pagedjs_bleed-right .pagedjs_marks-middle{
         width: 0;
-    } 
+    }
 
     .pagedjs_right_page{
         z-index: 10;
