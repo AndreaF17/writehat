@@ -83,25 +83,58 @@ $(document).on('click', '#restoreFromBackupReal', function(){
     formData.append('file', $('#backupUpload')[0].files[0]);
 
     $.ajax({
-       url : '/admintools/restore',
-       type : 'POST',
-       data : formData,
-       processData: false,  // tell jQuery not to process the data
-       contentType: false,  // tell jQuery not to set contentType
-       success: function(data) {
-         success('Restore successful!');
-         $('#adminRestore-modal').hide()
-        
-        
+      url: "/admintools/restore",
+      type: "POST",
+      data: formData,
+      processData: false, // tell jQuery not to process the data
+      contentType: false, // tell jQuery not to set contentType
+      success: function (data) {
+        success("Restore successful!");
+        $("#adminRestore-modal").hide();
+
         // refresh the findings view if we're on the findings page
-      //  if ( window.location.href.endsWith('/findings') ) {
-    //      loadPane('categoryBrowse', 'fullPane');
-          // empty out the form
-    //      $('#id_name').empty();
-    //      $('#id_category').empty();
+        //  if ( window.location.href.endsWith('/findings') ) {
+        //      loadPane('categoryBrowse', 'fullPane');
+        // empty out the form
+        //      $('#id_name').empty();
+        //      $('#id_category').empty();
       },
-      error: function(data) {
-      $('#adminRestore-modal').hide();
-      error('Restore FAILED: ' + data.responseText);
-     }});
+      error: function (data) {
+        $("#adminRestore-modal").hide();
+        error("Restore FAILED: " + data.responseText);
+      },
+    });
 })
+
+
+$(document).on("click", ".userToggleActive", function () {
+  if ($(this).hasClass("disabled")) {
+    return;
+  }
+  var row = $(this).closest("tr");
+  var userId = row.data("user-id");
+  var username = row.data("user-name");
+  var isActive = row.data("user-active") == 1 || row.data("user-active") == "1";
+  var action = isActive ? "Deactivate" : "Activate";
+  promptModal(
+    (confirm_callback = function () {
+      $.post({
+        url: `/admintools/users/${userId}/toggle-active`,
+        success: function (data) {
+          successRedirect(
+            "/admintools",
+            `User ${username} ${isActive ? "deactivated" : "activated"}.`,
+          );
+        },
+        error: function (data) {
+          error("Failed to update user: " + data.responseText);
+        },
+      });
+    }),
+    (title = `${action} user?`),
+    (body = `Are you sure you want to ${action.toLowerCase()} **${username}**?`),
+    (leftButtonName = "Cancel"),
+    (rightButtonName = `${action} User`),
+    (danger = isActive),
+  );
+});

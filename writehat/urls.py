@@ -17,6 +17,7 @@ urlpatterns = [
     # Authentication URLS
     path('login', LoginView.as_view(), name='login'),
     path('logout', LogoutView.as_view(), name='logout'),
+    path('account', views.accountEdit),
 
     # Root level URLS
     path('admin', admin.site.urls),
@@ -149,6 +150,9 @@ urlpatterns = [
 
 # Admin URLS
     path('admintools', views.admintoolsHome),
+    path('admintools/users/new', views.adminUserNew),
+    path('admintools/users/<int:user_id>/edit', views.adminUserEdit),
+    path('admintools/users/<int:user_id>/toggle-active', views.adminUserToggleActive),
     path('admintools/backup', views.admintoolsBackup),
     path('admintools/restore', views.admintoolsRestore),
 

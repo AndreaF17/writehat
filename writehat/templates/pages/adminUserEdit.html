@@ -1,0 +1,22 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}{{ header }}{% endblock %}
+
+{% block headerLeft %}
+  <div style="padding-right: .3rem">
+    {% include 'snippets/textButton.html' with name='Back' href='/admintools' type='chevron-left' class='btn-secondary' %}
+  </div>
+  {{ header }}
+{% endblock %}
+
+{% block headerRight %}
+  {% include 'snippets/textButton.html' with name='Save' id='userSave' type='save' class='btn-success' %}
+{% endblock %}
+
+{% block fullPane %}
+  {% include 'panes/adminUserForm.html' %}
+{% endblock %}
+
+{% block footer %}
+  <script src="/static/js/adminUsers.js"></script>
+{% endblock %}

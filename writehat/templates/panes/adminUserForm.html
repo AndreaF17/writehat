@@ -1,0 +1,73 @@
+<div class="border border-danger rounded p-3 bg-light">
+  {% if errors %}
+    <div class="alert alert-danger" role="alert">
+      <ul class="mb-0">
+        {% for err in errors %}
+          <li>{{ err }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form id="userForm" method="POST" action="{{ form_action }}" autocomplete="off">
+    {% csrf_token %}
+    <table class="writehat-form">
+      <tr>
+        <th><label for="id_username">Username</label></th>
+        <td>
+          <input type="text" id="id_username" name="username" value="{{ form_data.username }}" {% if not is_new %}readonly{% endif %} />
+        </td>
+      </tr>
+      <tr>
+        <th><label for="id_first_name">First name</label></th>
+        <td>
+          <input type="text" id="id_first_name" name="first_name" value="{{ form_data.first_name }}" />
+        </td>
+      </tr>
+      <tr>
+        <th><label for="id_last_name">Last name</label></th>
+        <td>
+          <input type="text" id="id_last_name" name="last_name" value="{{ form_data.last_name }}" />
+        </td>
+      </tr>
+      <tr>
+        <th><label for="id_email">Email</label></th>
+        <td>
+          <input type="text" id="id_email" name="email" value="{{ form_data.email }}" />
+        </td>
+      </tr>
+      <tr>
+        <th><label for="id_password1">Password</label></th>
+        <td>
+          <input type="password" id="id_password1" name="password1" />
+          <div class="text-muted small">
+            {% if is_new %}Required.{% else %}Leave blank to keep current password.{% endif %}
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th><label for="id_password2">Confirm Password</label></th>
+        <td>
+          <input type="password" id="id_password2" name="password2" />
+        </td>
+      </tr>
+      <tr>
+        <th><label>Account</label></th>
+        <td>
+          <div class="custom-control custom-checkbox d-inline-block mr-3">
+            <input class="custom-control-input" type="checkbox" id="id_is_active" name="is_active" {% if form_data.is_active %}checked{% endif %}>
+            <label class="custom-control-label" for="id_is_active">Active</label>
+          </div>
+          <div class="custom-control custom-checkbox d-inline-block mr-3">
+            <input class="custom-control-input" type="checkbox" id="id_is_staff" name="is_staff" {% if form_data.is_staff %}checked{% endif %}>
+            <label class="custom-control-label" for="id_is_staff">Staff</label>
+          </div>
+          <div class="custom-control custom-checkbox d-inline-block">
+            <input class="custom-control-input" type="checkbox" id="id_is_superuser" name="is_superuser" {% if form_data.is_superuser %}checked{% endif %}>
+            <label class="custom-control-label" for="id_is_superuser">Superuser</label>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>

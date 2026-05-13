@@ -9,12 +9,15 @@ from datetime import datetime
 
 # django
 from django.conf import settings
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.html import escape
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from django.views.decorators.http import require_http_methods
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
@@ -2041,13 +2044,59 @@ def customerImport(request):
     return HttpResponse(customer.id)
 
 
+def _user_form_data_from_user(user_obj):
+    return {
+        'username': user_obj.username or '',
+        'first_name': user_obj.first_name or '',
+        'last_name': user_obj.last_name or '',
+        'email': user_obj.email or '',
+        'is_active': user_obj.is_active,
+        'is_staff': user_obj.is_staff,
+        'is_superuser': user_obj.is_superuser,
+    }
+
+
+def _user_form_data_from_request(request, include_admin_fields=False):
+    data = {
+        'username': request.POST.get('username', '').strip(),
+        'first_name': request.POST.get('first_name', '').strip(),
+        'last_name': request.POST.get('last_name', '').strip(),
+        'email': request.POST.get('email', '').strip(),
+        'is_active': True,
+        'is_staff': False,
+        'is_superuser': False,
+    }
+    if include_admin_fields:
+        data['is_active'] = request.POST.get('is_active') == 'on'
+        data['is_staff'] = request.POST.get('is_staff') == 'on'
+        data['is_superuser'] = request.POST.get('is_superuser') == 'on'
+    return data
+
+
+def _validate_passwords(password1, password2, require_password=False):
+    errors = []
+    if require_password and not password1:
+        errors.append('Password is required.')
+        return errors
+    if password1 or password2:
+        if password1 != password2:
+            errors.append('Passwords do not match.')
+        else:
+            try:
+                validate_password(password1)
+            except ValidationError as e:
+                errors.extend(e.messages)
+    return errors
+
+
 # Admin tools
 
 @user_passes_test(lambda u: u.is_superuser)
 @require_http_methods(['GET'])
 def admintoolsHome(request):
     log.debug(f"adminHome called")
-    return render(request,"pages/admin.html",{})
+    users = User.objects.order_by('username')
+    return render(request,"pages/admin.html",{'users': users})
 
 
 @user_passes_test(lambda u: u.is_superuser)
@@ -2088,3 +2137,167 @@ def admintoolsRestore(request):
         return response  
 
 
+@user_passes_test(lambda u: u.is_superuser)
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def adminUserNew(request):
+    if request.method == 'GET':
+        return render(request, "pages/adminUserEdit.html", {
+            'form_action': '/admintools/users/new',
+            'form_data': {
+                'username': '',
+                'first_name': '',
+                'last_name': '',
+                'email': '',
+                'is_active': True,
+                'is_staff': False,
+                'is_superuser': False,
+            },
+            'errors': [],
+            'is_new': True,
+            'header': 'New User',
+        })
+
+    form_data = _user_form_data_from_request(request, include_admin_fields=True)
+    errors = []
+    if not form_data['username']:
+        errors.append('Username is required.')
+    elif User.objects.filter(username=form_data['username']).exists():
+        errors.append('Username is already in use.')
+
+    password1 = request.POST.get('password1', '')
+    password2 = request.POST.get('password2', '')
+    errors.extend(_validate_passwords(password1, password2, require_password=True))
+
+    if form_data['is_superuser'] and not form_data['is_staff']:
+        form_data['is_staff'] = True
+
+    if errors:
+        return render(request, "pages/adminUserEdit.html", {
+            'form_action': '/admintools/users/new',
+            'form_data': form_data,
+            'errors': errors,
+            'is_new': True,
+            'header': 'New User',
+        }, status=400)
+
+    user_obj = User.objects.create_user(
+        username=form_data['username'],
+        password=password1,
+        email=form_data['email']
+    )
+    user_obj.first_name = form_data['first_name']
+    user_obj.last_name = form_data['last_name']
+    user_obj.is_active = form_data['is_active']
+    user_obj.is_staff = form_data['is_staff']
+    user_obj.is_superuser = form_data['is_superuser']
+    user_obj.save()
+
+    messages.success(request, f'User {user_obj.username} created.')
+    return redirect(f'/admintools/users/{user_obj.id}/edit')
+
+
+@user_passes_test(lambda u: u.is_superuser)
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def adminUserEdit(request, user_id):
+    user_obj = get_object_or_404(User, id=user_id)
+
+    if request.method == 'GET':
+        return render(request, "pages/adminUserEdit.html", {
+            'form_action': f'/admintools/users/{user_obj.id}/edit',
+            'form_data': _user_form_data_from_user(user_obj),
+            'errors': [],
+            'is_new': False,
+            'header': f'Edit User: {user_obj.username}',
+        })
+
+    form_data = _user_form_data_from_request(request, include_admin_fields=True)
+    errors = []
+    if not form_data['username']:
+        errors.append('Username is required.')
+    elif User.objects.filter(username=form_data['username']).exclude(id=user_obj.id).exists():
+        errors.append('Username is already in use.')
+
+    password1 = request.POST.get('password1', '')
+    password2 = request.POST.get('password2', '')
+    errors.extend(_validate_passwords(password1, password2, require_password=False))
+
+    if form_data['is_superuser'] and not form_data['is_staff']:
+        form_data['is_staff'] = True
+
+    if errors:
+        return render(request, "pages/adminUserEdit.html", {
+            'form_action': f'/admintools/users/{user_obj.id}/edit',
+            'form_data': form_data,
+            'errors': errors,
+            'is_new': False,
+            'header': f'Edit User: {user_obj.username}',
+        }, status=400)
+
+    user_obj.username = form_data['username']
+    user_obj.first_name = form_data['first_name']
+    user_obj.last_name = form_data['last_name']
+    user_obj.email = form_data['email']
+    user_obj.is_active = form_data['is_active']
+    user_obj.is_staff = form_data['is_staff']
+    user_obj.is_superuser = form_data['is_superuser']
+    if password1:
+        user_obj.set_password(password1)
+    user_obj.save()
+    if password1 and user_obj.id == request.user.id:
+        update_session_auth_hash(request, user_obj)
+
+    messages.success(request, f'User {user_obj.username} updated.')
+    return redirect(f'/admintools/users/{user_obj.id}/edit')
+
+
+@user_passes_test(lambda u: u.is_superuser)
+@csrf_protect
+@require_http_methods(['POST'])
+def adminUserToggleActive(request, user_id):
+    user_obj = get_object_or_404(User, id=user_id)
+    if user_obj.id == request.user.id:
+        return HttpResponse('You cannot deactivate your own account.', status=400)
+    user_obj.is_active = not user_obj.is_active
+    user_obj.save()
+    return JsonResponse({'is_active': user_obj.is_active})
+
+
+@login_required
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def accountEdit(request):
+    user_obj = request.user
+    if request.method == 'GET':
+        return render(request, "pages/account.html", {
+            'form_action': '/account',
+            'form_data': _user_form_data_from_user(user_obj),
+            'errors': [],
+        })
+
+    form_data = _user_form_data_from_request(request, include_admin_fields=False)
+    errors = []
+
+    password1 = request.POST.get('password1', '')
+    password2 = request.POST.get('password2', '')
+    errors.extend(_validate_passwords(password1, password2, require_password=False))
+
+    if errors:
+        return render(request, "pages/account.html", {
+            'form_action': '/account',
+            'form_data': form_data,
+            'errors': errors,
+        }, status=400)
+
+    user_obj.first_name = form_data['first_name']
+    user_obj.last_name = form_data['last_name']
+    user_obj.email = form_data['email']
+    if password1:
+        user_obj.set_password(password1)
+    user_obj.save()
+    if password1:
+        update_session_auth_hash(request, user_obj)
+
+    messages.success(request, 'Account updated.')
+    return redirect('/account')
