@@ -1,2 +1,9 @@
 @import url('/static/css/component/FindingsList.css');
 @import url('/static/css/component/FindingsListShort.css');
+
+.findings-combined-group-name {
+	display: block !important;
+	font-size: 1.25rem;
+	font-weight: 700;
+	margin: 0.75rem 0;
+}

@@ -32,7 +32,16 @@ class Component(BaseComponent):
                 }
                 toc_components.append(component)
 
-                if len(c.children):
-                    toc_components += cls.buildToc(c.children, level + 1)
+            if c.includeInToc and hasattr(c, 'toc_entries'):
+                for entry in c.toc_entries() or []:
+                    toc_components.append({
+                        "name": entry.get("name", ""),
+                        "id": entry.get("id", ""),
+                        "level": entry.get("level", level),
+                        "index": entry.get("index", ""),
+                    })
+
+            if c.includeInToc and c.showTitle and len(c.children):
+                toc_components += cls.buildToc(c.children, level + 1)
 
         return toc_components

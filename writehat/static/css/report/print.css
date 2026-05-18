@@ -5,6 +5,12 @@
 
     @bottom-right-corner {
         content: counter(page);
+        font-size: 9pt !important;
+        font-weight: 700;
+        color: #111;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 0.04in 0.08in;
+        border-radius: 2px;
     }
 
     @top-center {
@@ -18,7 +24,7 @@
         content: element(footerContent);
         white-space: pre-wrap;
         text-align: center;
-        font-size: 10pt !important;
+        font-size: 8pt !important;
     }
 }
 

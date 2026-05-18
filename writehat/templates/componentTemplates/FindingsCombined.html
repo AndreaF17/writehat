@@ -3,7 +3,11 @@
 
   {% for section in group_sections %}
     <section class="l{{ level }} component part">
-      {% include 'componentTemplates/Heading.html' with name=section.group.name classes="finding-heading-short" %}
+      <h{{ level|add:"1" }}
+        id="component_{{ id }}_group_{{ forloop.counter }}"
+        class="toc-member findings-combined-group-name">
+      {{ section.toc_index }} {{ section.group.name }}
+      </h{{ level|add:"1" }}>
 
       {% if section.group.scoringType == 'PROACTIVE' %}
         {% include 'componentTemplates/SeverityLegend.html' with proactive_only=True %}
