@@ -3,3 +3,10 @@ mysql/
 venv/
 **/__pycache__/**
 migrations
+logs.txt
+*.log
+*.env
+*.pyc
+*.pyo
+*.pyd
+*.db        
