@@ -1,9 +1,17 @@
-<div class="container-fluid px-3 py-2 bg-light border border-danger rounded mb-3">
-  <div class="d-flex align-items-center justify-content-between">
-    <h5 class="text-danger mb-0">User Management</h5>
-    {% include 'snippets/textButton.html' with href='/admintools/users/new' name='New User' type='user-plus' class='btn-danger' %}
+<div class="container-fluid px-3 py-3 admin-tools-card admin-users-card mb-3">
+  <div class="d-flex align-items-center justify-content-between admin-tools-heading">
+    <h5 class="text-danger mb-0">
+      <i class="fas fa-users-cog mr-2"></i>User Management
+    </h5>
+    <div class="admin-tools-heading-actions">
+      <span class="admin-users-count badge badge-pill badge-light">{{ users|length }} users</span>
+      <a href="/admin-tools/users/new" class="btn btn-danger btn-sm admin-add-user" role="button">
+        <i class="fas fa-user-plus mr-1"></i>
+        <strong>New User</strong>
+      </a>
+    </div>
   </div>
-  <table class="writehat-table container-fluid table-light table-striped table-hover overflow-auto paginate mt-3">
+  <table class="writehat-table container-fluid table-light table-hover overflow-auto paginate mt-3 admin-users-table">
     <thead>
       <tr>
         <th><strong>Username</strong></th>
@@ -19,7 +27,7 @@
       {% for user_obj in users %}
         <tr data-user-id="{{ user_obj.id }}" data-user-name="{{ user_obj.username }}" data-user-active="{{ user_obj.is_active|yesno:'1,0' }}">
           <td class="pl-2">
-            <a href="/admintools/users/{{ user_obj.id }}/edit">
+            <a href="/admin-tools/users/{{ user_obj.id }}/edit">
               {{ user_obj.username }}
             </a>
           </td>
@@ -51,8 +59,8 @@
             {% endif %}
           </td>
           <td>
-            <div class="floating float-right vertical-align-center mt-1">
-              <a href="/admintools/users/{{ user_obj.id }}/edit" class="text-info writehat-smallbutton bg-transparent border-0" title="Edit User">
+            <div class="floating float-right vertical-align-center mt-1 admin-actions-wrap">
+              <a href="/admin-tools/users/{{ user_obj.id }}/edit" class="text-info writehat-smallbutton bg-transparent border-0" title="Edit User">
                 {% include 'snippets/smallIcon.html' with type='edit' %}
               </a>
               {% if user_obj.id == request.user.id %}
@@ -62,6 +70,11 @@
               {% else %}
                 {% include 'snippets/smallButton.html' with title='Activate User' type='user-check' class='text-success userToggleActive' %}
               {% endif %}
+              {% if user_obj.id == request.user.id %}
+                {% include 'snippets/smallButton.html' with title='Cannot delete your own account' type='trash-alt' class='text-muted userDelete disabled' attrs='disabled' %}
+              {% else %}
+                {% include 'snippets/smallButton.html' with title='Delete User' type='trash-alt' class='text-danger userDelete' %}
+              {% endif %}
             </div>
           </td>
         </tr>
@@ -70,14 +83,18 @@
   </table>
 </div>
 
-<div class="container-fluid px-3 py-2 bg-light border border-danger rounded">
-  <p>The export feature will produce a zip file containing JSON representations of each data model used within the WriteHat MySQL database, a JSON export of the mongo database, and images in their original format.</p>
+<div class="container-fluid px-3 py-3 admin-tools-card admin-backup-card">
+  <h5 class="text-danger mb-3">
+    <i class="fas fa-database mr-2"></i>Backup and Restore
+  </h5>
+  <p class="mb-2">The export feature will produce a zip file containing JSON representations of each data model used within the WriteHat MySQL database, a JSON export of the mongo database, and images in their original format.</p>
 
-  <p>The zip file can be used to restore the state of the database using the import feature.</p>
+  <p class="mb-3">The zip file can be used to restore the state of the database using the import feature.</p>
 
-  <div class="alert alert-danger" role="alert">This should not be considered an alternative to a full offline backup. Exports created under a previous version of WriteHat are not guaranteed to be compatible with newer versions.</div>
+  <div class="alert alert-danger mb-3" role="alert">This should not be considered an alternative to a full offline backup. Exports created under a previous version of WriteHat are not guaranteed to be compatible with newer versions.</div>
 
-  {% include 'snippets/textButton.html' with id='backup' name='Data Export' type='download' class='btn-light border border-success mb-3' %}
-  <br>
-  {% include 'snippets/textButton.html' with id='restorefromBackup' name='Data Import' type='exclamation-triangle' class='btn-light border border-danger mb-3' %}
+  <div class="admin-backup-actions">
+    {% include 'snippets/textButton.html' with id='backup' name='Data Export' type='download' class='btn-light admin-backup-btn admin-backup-export' %}
+    {% include 'snippets/textButton.html' with id='restorefromBackup' name='Data Import' type='exclamation-triangle' class='btn-light admin-backup-btn admin-backup-import' %}
+  </div>
 </div>

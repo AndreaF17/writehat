@@ -194,6 +194,8 @@ def componentEdit(request,uuid,form=None):
     log.debug("componentEdit() called; UUID: {0}".format(uuid))
     #try:
     component = BaseComponent.get(uuid)
+    if hasattr(component, 'set_scores_initial_from_targets'):
+        component.set_scores_initial_from_targets()
     #except:
     #return HttpResponse('Security Violation!')
 
@@ -215,6 +217,9 @@ def componentSave(request,uuid):
 
         component.updateFromForm(request.POST)
         log.debug("Form data applied to component")
+
+        if hasattr(component, 'set_scores_initial_from_targets'):
+            component.set_scores_initial_from_targets()
 
         component.save()
         log.debug("Component saved")
@@ -2143,7 +2148,7 @@ def admintoolsRestore(request):
 def adminUserNew(request):
     if request.method == 'GET':
         return render(request, "pages/adminUserEdit.html", {
-            'form_action': '/admintools/users/new',
+            'form_action': '/admin-tools/users/new',
             'form_data': {
                 'username': '',
                 'first_name': '',
@@ -2174,7 +2179,7 @@ def adminUserNew(request):
 
     if errors:
         return render(request, "pages/adminUserEdit.html", {
-            'form_action': '/admintools/users/new',
+            'form_action': '/admin-tools/users/new',
             'form_data': form_data,
             'errors': errors,
             'is_new': True,
@@ -2194,7 +2199,7 @@ def adminUserNew(request):
     user_obj.save()
 
     messages.success(request, f'User {user_obj.username} created.')
-    return redirect(f'/admintools/users/{user_obj.id}/edit')
+    return redirect(f'/admin-tools/users/{user_obj.id}/edit')
 
 
 @user_passes_test(lambda u: u.is_superuser)
@@ -2205,7 +2210,7 @@ def adminUserEdit(request, user_id):
 
     if request.method == 'GET':
         return render(request, "pages/adminUserEdit.html", {
-            'form_action': f'/admintools/users/{user_obj.id}/edit',
+            'form_action': f'/admin-tools/users/{user_obj.id}/edit',
             'form_data': _user_form_data_from_user(user_obj),
             'errors': [],
             'is_new': False,
@@ -2228,7 +2233,7 @@ def adminUserEdit(request, user_id):
 
     if errors:
         return render(request, "pages/adminUserEdit.html", {
-            'form_action': f'/admintools/users/{user_obj.id}/edit',
+            'form_action': f'/admin-tools/users/{user_obj.id}/edit',
             'form_data': form_data,
             'errors': errors,
             'is_new': False,
@@ -2249,7 +2254,7 @@ def adminUserEdit(request, user_id):
         update_session_auth_hash(request, user_obj)
 
     messages.success(request, f'User {user_obj.username} updated.')
-    return redirect(f'/admintools/users/{user_obj.id}/edit')
+    return redirect(f'/admin-tools/users/{user_obj.id}/edit')
 
 
 @user_passes_test(lambda u: u.is_superuser)
@@ -2262,6 +2267,21 @@ def adminUserToggleActive(request, user_id):
     user_obj.is_active = not user_obj.is_active
     user_obj.save()
     return JsonResponse({'is_active': user_obj.is_active})
+
+
+@user_passes_test(lambda u: u.is_superuser)
+@csrf_protect
+@require_http_methods(['POST'])
+def adminUserDelete(request, user_id):
+    user_obj = get_object_or_404(User, id=user_id)
+    if user_obj.id == request.user.id:
+        return HttpResponse('You cannot delete your own account.', status=400)
+    if user_obj.is_superuser and User.objects.filter(is_superuser=True).count() <= 1:
+        return HttpResponse('Cannot delete the last superuser.', status=400)
+
+    username = user_obj.username
+    user_obj.delete()
+    return JsonResponse({'deleted': True, 'username': username})
 
 
 @login_required
@@ -2279,6 +2299,11 @@ def accountEdit(request):
     form_data = _user_form_data_from_request(request, include_admin_fields=False)
     errors = []
 
+    if not form_data['username']:
+        errors.append('Username is required.')
+    elif User.objects.filter(username=form_data['username']).exclude(id=user_obj.id).exists():
+        errors.append('Username is already in use.')
+
     password1 = request.POST.get('password1', '')
     password2 = request.POST.get('password2', '')
     errors.extend(_validate_passwords(password1, password2, require_password=False))
@@ -2290,6 +2315,7 @@ def accountEdit(request):
             'errors': errors,
         }, status=400)
 
+    user_obj.username = form_data['username']
     user_obj.first_name = form_data['first_name']
     user_obj.last_name = form_data['last_name']
     user_obj.email = form_data['email']

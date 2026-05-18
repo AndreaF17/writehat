@@ -12,8 +12,9 @@
   right: auto;
   flex-grow: 0;
   flex-direction: column;
-  background: #222;
-  border-right: 2px solid rgba(255,255,255,.1);
+  background: linear-gradient(180deg, #17191d 0%, #111317 100%);
+  border-right: 1px solid rgba(255,255,255,.14);
+  box-shadow: 8px 0 24px rgba(0,0,0,.24);
 }
 
 body {
@@ -38,12 +39,52 @@ body {
   margin-top: 2rem;
 }
 
+#writehatNavFooter {
+  width: 100%;
+  margin-bottom: .7rem;
+}
+
+#writehatNavFooter .nav-item + .nav-item {
+  margin-top: .25rem;
+}
+
+#writehatNavFooter .nav-item {
+  background: rgba(143, 184, 255, .14);
+}
+
+#writehatNavFooter .nav-item:hover {
+  background: rgba(143, 184, 255, .22) !important;
+}
+
+.nav-my-account-docked {
+  border-left-color: var(--faded-blue) !important;
+}
+
+.nav-my-account-docked i {
+  color: #bcd8ff;
+}
+
+.navstyle-logout {
+  background: rgba(220, 53, 69, .14) !important;
+}
+
+.navstyle-logout:hover {
+  background: rgba(220, 53, 69, .24) !important;
+}
+
+.nav-logout-docked {
+  border-left-color: #dc3545 !important;
+}
+
+.nav-logout-docked i {
+  color: #ff9aa6;
+}
+
 div.nav-item a > i, div.nav-item button > i {
   font-size: 1.5rem;
-  padding: .7rem;
-  padding-left: .2rem;
-  padding-right: .2rem;
+  padding: .72rem .22rem;
   pointer-events: none;
+  transition: transform .18s ease, filter .18s ease;
 }
 
 div.nav-item a , div.nav-item button {
@@ -53,20 +94,26 @@ div.nav-item a , div.nav-item button {
   height: 100%;
   padding: 0rem;
   text-align: center;
-  border-left: .3rem solid transparent !important;
+  border-left: .22rem solid transparent !important;
   margin-right: .3rem;
+  transition: background-color .2s ease, border-color .2s ease;
 }
 
 div.nav-item a:hover, div.nav-item.active a {
-  border-left: .3rem solid var(--dark) !important;
+  border-left: .22rem solid var(--dark) !important;
 }
 
 div.nav-item.active {
-  background-color: rgb(0,0,0);
+  background-color: rgba(255,255,255,.06);
 }
 
 div.nav-item:hover {
-  background-color: #333 !important;
+  background-color: rgba(255,255,255,.08) !important;
+}
+
+div.nav-item:hover i,
+div.nav-item.active i {
+  transform: translateX(1px);
 }
 
 .tooltip {
@@ -89,6 +136,27 @@ div.nav-item:hover {
   z-index: 9999;
 }
 
+.nav-user-trigger {
+  border-radius: 0 .4rem .4rem 0;
+}
+
+.navstyle-user .dropdown-menu {
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(8px, -4px) scale(.98);
+  transform-origin: left top;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.navstyle-user:hover .dropdown-menu,
+.navstyle-user .dropdown-menu.show,
+.navstyle-user .dropdown-menu:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(12px, -4px) scale(1);
+}
+
 /* USER AREA */
 
 .nav-logo-user {
@@ -100,50 +168,68 @@ div.nav-item:hover {
 .nav-user-div {
   width: 100%;
   display: flex;
-  color: white;
+  color: #e9eef5;
 }
 
 .nav-user-area {
+  min-width: 16rem;
+  max-width: 18rem;
   width: 100%;
   align-items: center;
-  padding: .5rem;
+  padding: .65rem;
   display: flex;
   flex-wrap: wrap;
+  border-radius: .65rem;
+  background: linear-gradient(165deg, #1f242c 0%, #171b21 100%);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 14px 30px rgba(0,0,0,.34);
 }
 
 .nav-profile-image {
   display: flex;
   align-items: center;
-  padding-left: .3rem;
+  width: 100%;
+  padding: .2rem .4rem .45rem .4rem;
+  border-bottom: 1px solid rgba(255,255,255,.12);
 }
 
 .nav-username {
   display: flex;
-  font-weight: bold;
-  margin: .3rem;
-  margin-left: .5rem;
+  font-weight: 700;
+  margin: 0;
+  margin-left: .55rem;
+  color: #ffffff;
+  letter-spacing: .01em;
 }
 
 .nav-profile-buttons {
   width: 100%;
   display: flex;
-  padding-top: .3rem;
+  flex-direction: column;
+  gap: .38rem;
+  padding-top: .55rem;
 }
 
 .nav-profile-buttons a {
-  margin: 0px !important;
+  margin: 0 !important;
   width: 100%;
-  background-color: #444;
+  text-align: left;
+  border: 1px solid rgba(255,255,255,.1);
+  background-color: rgba(255,255,255,.06);
+  color: #f3f6fb !important;
+  border-radius: .45rem;
 }
 
 .nav-profile-buttons a:hover {
-  background-color: #555;
-}
-
-.nav-logout span {
-  color: white;
+  background-color: rgba(255,255,255,.14);
+  border-color: rgba(255,255,255,.2);
 }
 
 .nav-logout i {
-  color: red;
+  color: #ff8f8f;
+}
+
+.nav-logout:hover {
+  background: rgba(220,53,69,.2) !important;
+  border-color: rgba(220,53,69,.45);
 }

@@ -1,5 +1,105 @@
 $(document).ready(function () {
 
+  function buildTargetSummaryScoresEditor() {
+    var textarea = $("#id_scores");
+    if (!textarea.length) {
+      return;
+    }
+
+    var scoreOptions = [
+      "INSERT SCORE",
+      "CRITICAL",
+      "HIGH",
+      "MEDIUM",
+      "LOW",
+      "INFO",
+    ];
+    var lines = (textarea.val() || "").split(/\r?\n/);
+    var rows = [];
+
+    lines.forEach(function (rawLine) {
+      var line = (rawLine || "").trim();
+      if (!line || line.startsWith("#")) {
+        return;
+      }
+
+      var separator =
+        line.indexOf("|") >= 0 ? "|" : line.indexOf("=") >= 0 ? "=" : null;
+      var target = "";
+      var score = "INSERT SCORE";
+
+      if (separator) {
+        var parts = line.split(separator);
+        target = (parts.shift() || "").trim();
+        score =
+          (parts.join(separator) || "").trim().toUpperCase() || "INSERT SCORE";
+      } else {
+        target = line;
+      }
+
+      if (target) {
+        rows.push({ target: target, score: score });
+      }
+    });
+
+    if (!rows.length) {
+      return;
+    }
+
+    var wrapper = $('<div class="target-summary-scores-editor mt-2"></div>');
+    rows.forEach(function (row, index) {
+      var rowEl = $('<div class="form-row mb-2 align-items-center"></div>');
+      var targetCol = $('<div class="col-sm-8"></div>');
+      var scoreCol = $('<div class="col-sm-4"></div>');
+
+      targetCol.append(
+        $('<label class="mb-0 font-weight-bold"></label>').text(row.target),
+      );
+
+      var select = $('<select class="form-control form-control-sm"></select>');
+      scoreOptions.forEach(function (opt) {
+        select.append($("<option></option>").attr("value", opt).text(opt));
+      });
+      if (scoreOptions.indexOf(row.score) < 0) {
+        select.append(
+          $("<option></option>").attr("value", row.score).text(row.score),
+        );
+      }
+      select.val(row.score);
+      select.attr("data-target-index", index);
+      scoreCol.append(select);
+
+      rowEl.append(targetCol).append(scoreCol);
+      wrapper.append(rowEl);
+    });
+
+    function syncTextarea() {
+      var updated = rows
+        .map(function (row) {
+          return row.target + " | " + row.score;
+        })
+        .join("\n");
+      textarea.val(updated);
+    }
+
+    wrapper.on("change", "select", function () {
+      var i = parseInt($(this).attr("data-target-index"), 10);
+      rows[i].score = ($(this).val() || "INSERT SCORE").trim().toUpperCase();
+      syncTextarea();
+    });
+
+    textarea.hide();
+    textarea.after(wrapper);
+    textarea
+      .siblings(
+        ".editor-toolbar, .CodeMirror, .editor-preview-side, .editor-statusbar",
+      )
+      .hide();
+    syncTextarea();
+  }
+
+  buildTargetSummaryScoresEditor();
+
   // prefill the findingGroup form field if it exists
   $('#id_findingGroup').val($("#fgroup-info").attr('fgroup-id'));
   $('#id_findingGroup').selectpicker('refresh');

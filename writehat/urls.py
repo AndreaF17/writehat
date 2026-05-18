@@ -4,7 +4,6 @@ from writehat.lib.finding import *
 
 from django.conf import settings
 from django.urls import path, include
-from django.contrib import admin
 from django.conf.urls import url
 from django.contrib.auth.views import LoginView,LogoutView
 
@@ -20,7 +19,6 @@ urlpatterns = [
     path('account', views.accountEdit),
 
     # Root level URLS
-    path('admin', admin.site.urls),
     path('home', views.home, name='home'),
     path('', views.index),
 
@@ -149,11 +147,12 @@ urlpatterns = [
 
 
 # Admin URLS
-    path('admintools', views.admintoolsHome),
-    path('admintools/users/new', views.adminUserNew),
-    path('admintools/users/<int:user_id>/edit', views.adminUserEdit),
-    path('admintools/users/<int:user_id>/toggle-active', views.adminUserToggleActive),
-    path('admintools/backup', views.admintoolsBackup),
-    path('admintools/restore', views.admintoolsRestore),
+    path('admin-tools', views.admintoolsHome),
+    path('admin-tools/users/new', views.adminUserNew),
+    path('admin-tools/users/<int:user_id>/edit', views.adminUserEdit),
+    path('admin-tools/users/<int:user_id>/toggle-active', views.adminUserToggleActive),
+    path('admin-tools/users/<int:user_id>/delete', views.adminUserDelete),
+    path('admin-tools/backup', views.admintoolsBackup),
+    path('admin-tools/restore', views.admintoolsRestore),
 
 ]

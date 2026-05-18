@@ -2,7 +2,7 @@
 
 <div id="finding-{{ finding.id }}" scoring-type="CVSS" class="finding" finding-severity="{{ finding.severity }}">
     <div>
-        {% if first %}
+        {% if first and not hideFindingHeading %}
             {% include 'componentTemplates/Heading.html' with classes="finding-heading" %}
         {% endif %}
     </div>

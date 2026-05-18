@@ -89,7 +89,6 @@ LOGIN_REQUIRED_IGNORE_PATHS = ["/adminlogin/"]
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

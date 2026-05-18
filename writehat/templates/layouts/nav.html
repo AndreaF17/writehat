@@ -5,18 +5,6 @@
 
   <div id="writehatNavBar">
 
-    <div class="nav-item navstyle-user" navcolor='--dark'>
-
-      <div class="dropright show">
-        {% include 'snippets/smallButton.html' with id='navUserDropdown' type='user' class='btn text-dark dropdown-toggle' attrs='data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"' %}
-
-        <div class="dropdown-menu" aria-labelledby="navUserDropdown">
-          {% include 'snippets/navProfile.html' %}
-        </div>
-      </div>
-
-    </div>
-
     <!--
     <div class="nav-item navstyle-home" navcolor='--success'>
       {% include 'snippets/smallButton.html' with href='/engagements' type='home' class='text-success' tooltip='Home'%}
@@ -40,11 +28,20 @@
     </div>
 
     {% if request.user.is_superuser %}
-      <div class="nav-item navstyle-admintools" navcolor='--danger'>
-        {% include 'snippets/smallButton.html' with href='/admintools' type='user-shield' class='text-danger' tooltip='Admin Tools' %}
+      <div class="nav-item navstyle-admin-tools" navcolor='--danger'>
+        {% include 'snippets/smallButton.html' with href='/admin-tools' type='user-shield' class='text-danger' tooltip='Admin Tools' %}
       </div>
     {% endif %}
 
+  </div>
+
+  <div id="writehatNavFooter">
+    <div class="nav-item navstyle-account" navcolor='--faded-blue'>
+      {% include 'snippets/smallButton.html' with href='/account' type='user-cog' class='text-light nav-my-account-docked' tooltip='My Account' %}
+    </div>
+    <div class="nav-item navstyle-logout" navcolor='--red'>
+      {% include 'snippets/smallButton.html' with href='/logout' type='sign-out-alt' class='text-light nav-logout-docked' tooltip='Logout' %}
+    </div>
   </div>
 
 </nav>

@@ -1,7 +1,7 @@
 {% load custom_tags %}
 <div id="finding-{{ finding.id }}" scoring-type="DREAD" class="finding" finding-severity="{{ finding.severity }}">
     <div>
-        {% if first %}
+        {% if first and not hideFindingHeading %}
             {% include 'componentTemplates/Heading.html' with classes="finding-heading" %}
         {% endif %}
     </div>

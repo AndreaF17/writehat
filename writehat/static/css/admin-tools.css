@@ -1,0 +1,173 @@
+:root {
+  --admin-surface-gray: #222;
+  --admin-surface-raised: #2e333b;
+  --admin-border-gray: #464c56;
+}
+
+.admin-tools-card {
+  background: var(--admin-surface-gray) !important;
+  border: 1px solid var(--admin-border-gray);
+  border-left: 4px solid #dc3545;
+  border-radius: .7rem;
+  box-shadow: none;
+  color: #dde4ee;
+}
+
+.admin-tools-heading h5 {
+  letter-spacing: .01em;
+}
+
+.admin-tools-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+}
+
+.admin-users-count {
+  font-size: .78rem;
+  color: #dde6f2;
+  border: 1px solid #596171;
+  background: var(--admin-surface-raised) !important;
+}
+
+.admin-add-user {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #d75f6a;
+  color: #fff;
+}
+
+.admin-add-user:hover {
+  background-color: #c13243;
+  border-color: #df7783;
+  color: #fff;
+}
+
+.admin-users-table {
+  border-radius: .55rem;
+  overflow: hidden;
+  background: transparent;
+}
+
+.admin-users-table thead th {
+  border-top: none;
+  background: #353a43;
+  color: #e3eaf4;
+  border-color: #535b6b;
+}
+
+.admin-users-table tbody tr {
+  transition: none;
+  background-color: var(--admin-surface-gray);
+}
+
+.admin-users-table tbody tr:hover {
+  background-color: #2f343d;
+}
+
+.admin-users-table td,
+.admin-users-table th {
+  vertical-align: middle;
+  color: #d7e0ec;
+  border-top: 1px solid #404754;
+}
+
+.admin-users-card .dataTables_wrapper {
+  background: var(--admin-surface-gray);
+}
+
+.admin-users-card .dataTables_wrapper .dataTables_length select,
+.admin-users-card .dataTables_wrapper input[type=search] {
+  background: var(--admin-surface-raised) !important;
+  border-color: #576071;
+  color: #e4ebf5;
+}
+
+.admin-users-card .dataTables_wrapper .dataTables_length,
+.admin-users-card .dataTables_wrapper .dataTables_filter,
+.admin-users-card .dataTables_wrapper .dataTables_info,
+.admin-users-card .dataTables_wrapper .dataTables_paginate {
+  color: #c8d0dc;
+}
+
+.admin-users-card .dataTables_wrapper .dataTables_paginate .paginate_button {
+  color: #9fb6d3 !important;
+}
+
+.admin-users-card .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.admin-users-card .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  background: #3a404a;
+  border: 1px solid #555f71;
+  color: #dbe5f2 !important;
+}
+
+.admin-users-table a {
+  color: #9fcbff;
+}
+
+.admin-users-table a:hover {
+  color: #c4e0ff;
+}
+
+.admin-actions-wrap .writehat-smallbutton {
+  border-radius: .35rem;
+  transition: none;
+}
+
+.admin-actions-wrap .writehat-smallbutton:hover {
+  background-color: #3c4554 !important;
+}
+
+.admin-actions-wrap .userDelete:hover {
+  background-color: rgba(220, 53, 69, .2) !important;
+}
+
+.admin-backup-card p {
+  color: #d0d9e4;
+}
+
+.admin-backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .6rem;
+}
+
+.admin-backup-actions .writehat-textbutton {
+  min-width: 10rem;
+}
+
+.admin-backup-actions .btn-light {
+  background: var(--admin-surface-raised);
+  color: #e4ebf5;
+  border-color: #5a6374 !important;
+}
+
+.admin-backup-actions .btn-light:hover {
+  background: #3b4453;
+}
+
+.admin-backup-btn {
+  border-width: 1px;
+}
+
+.admin-backup-export i,
+.admin-backup-import i {
+  color: #b8c6d8;
+}
+
+@media (max-width: 992px) {
+  .admin-tools-heading {
+    gap: .55rem;
+    flex-wrap: wrap;
+  }
+
+  .admin-tools-heading-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .admin-backup-actions .writehat-textbutton {
+    width: 100%;
+  }
+}

@@ -17,7 +17,7 @@ function downloadFileFromText(content) {
 
 $(document).on('click', '#saveToBackup', function(){
 
-   window.open('/admintools/backup');
+  window.open("/admin-tools/backup");
    // $.post({
    // url: '/admintools/backup',
   //  success: function(response) {
@@ -83,7 +83,7 @@ $(document).on('click', '#restoreFromBackupReal', function(){
     formData.append('file', $('#backupUpload')[0].files[0]);
 
     $.ajax({
-      url: "/admintools/restore",
+      url: "/admin-tools/restore",
       type: "POST",
       data: formData,
       processData: false, // tell jQuery not to process the data
@@ -119,10 +119,10 @@ $(document).on("click", ".userToggleActive", function () {
   promptModal(
     (confirm_callback = function () {
       $.post({
-        url: `/admintools/users/${userId}/toggle-active`,
+        url: `/admin-tools/users/${userId}/toggle-active`,
         success: function (data) {
           successRedirect(
-            "/admintools",
+            "/admin-tools",
             `User ${username} ${isActive ? "deactivated" : "activated"}.`,
           );
         },
@@ -136,5 +136,33 @@ $(document).on("click", ".userToggleActive", function () {
     (leftButtonName = "Cancel"),
     (rightButtonName = `${action} User`),
     (danger = isActive),
+  );
+});
+
+
+$(document).on("click", ".userDelete", function () {
+  if ($(this).hasClass("disabled")) {
+    return;
+  }
+  var row = $(this).closest("tr");
+  var userId = row.data("user-id");
+  var username = row.data("user-name");
+  promptModal(
+    (confirm_callback = function () {
+      $.post({
+        url: `/admin-tools/users/${userId}/delete`,
+        success: function () {
+          successRedirect("/admin-tools", `User ${username} deleted.`);
+        },
+        error: function (data) {
+          error("Failed to delete user: " + data.responseText);
+        },
+      });
+    }),
+    (title = "Delete user?"),
+    (body = `This will permanently delete **${username}**. Continue?`),
+    (leftButtonName = "Cancel"),
+    (rightButtonName = "Delete User"),
+    (danger = true),
   );
 });

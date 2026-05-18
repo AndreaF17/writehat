@@ -1,0 +1,32 @@
+<section class="l{{ level }} container component part{% if pageBreakBefore %} page-break{% endif %}">
+{% include 'componentTemplates/Heading.html' %}
+
+  {% for section in group_sections %}
+    <section class="l{{ level }} component part">
+      {% include 'componentTemplates/Heading.html' with name=section.group.name classes="finding-heading-short" %}
+
+      {% if section.group.scoringType == 'PROACTIVE' %}
+        {% include 'componentTemplates/SeverityLegend.html' with proactive_only=True %}
+      {% else %}
+        {% include 'componentTemplates/SeverityLegend.html' with proactive=False %}
+      {% endif %}
+
+      {% for finding in section.findings %}
+        {% include finding.abridgedTemplate with finding=finding %}
+      {% endfor %}
+    </section>
+
+    <section class="l{{ level }} container component part page-break">
+      {% for finding in section.findings %}
+        {% include finding.htmlTemplate with finding=finding first=0 showFindingNumbers=0 showVector=1 %}
+        {% if not forloop.last %}
+          <div class="page-break"></div>
+        {% endif %}
+      {% endfor %}
+    </section>
+
+  {% empty %}
+    <p>No finding groups with findings are available.</p>
+  {% endfor %}
+
+</section>

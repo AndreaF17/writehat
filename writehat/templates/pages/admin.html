@@ -2,12 +2,15 @@
 
 {% block title %}Admin tools{% endblock %}
 
+{% block css %}
+  <link href="/static/css/admin-tools.css" rel="stylesheet">
+{% endblock %}
+
 {% block headerLeft %}
   Admin Tools
 {% endblock %}
 
 {% block headerRight %}
-  {% include 'snippets/textButton.html' with href='/admintools/users/new' name='New User' type='user-plus' class='btn-danger' %}
 {% endblock %}
 
 {% block fullPane %}

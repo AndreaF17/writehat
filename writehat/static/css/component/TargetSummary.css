@@ -1,0 +1,8 @@
+.generated-table table {
+  width: 100%;
+}
+
+.generated-table td,
+.generated-table th {
+  vertical-align: middle;
+}
