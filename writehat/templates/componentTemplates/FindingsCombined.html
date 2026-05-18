@@ -9,20 +9,30 @@
       {{ section.toc_index }} {{ section.group.name }}
       </h{{ level|add:"1" }}>
 
-      {% if section.group.scoringType == 'PROACTIVE' %}
-        {% include 'componentTemplates/SeverityLegend.html' with proactive_only=True %}
-      {% else %}
-        {% include 'componentTemplates/SeverityLegend.html' with proactive=False %}
-      {% endif %}
+      {% include 'componentTemplates/SeverityLegend.html' with proactive=False %}
 
+      <h{{ level|add:"2" }} class="findings-summary-heading">Summary of Findings</h{{ level|add:"2" }}>
       {% for finding in section.findings %}
-        {% include finding.abridgedTemplate with finding=finding %}
+        {% if not report.finding_uuids or finding.id in report.finding_uuids %}
+          <p class="findings-summary-entry background-color-severity-faded" finding-severity="{{ finding.severity }}">
+            <a href="#finding-{{ finding.id }}">[{{ finding.number }}] {{ finding.name }}</a>
+          </p>
+        {% endif %}
       {% endfor %}
+
+      {% if section.abridged_findings %}
+        <h{{ level|add:"2" }} class="findings-summary-heading">Abridged Findings</h{{ level|add:"2" }}>
+        {% for finding in section.abridged_findings %}
+          {% if not report.finding_uuids or finding.id in report.finding_uuids %}
+            {% include finding.abridgedTemplate with finding=finding %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
     </section>
 
     <section class="l{{ level }} container component part page-break">
       {% for finding in section.findings %}
-        {% include finding.htmlTemplate with finding=finding first=0 showFindingNumbers=0 showVector=1 %}
+        {% include finding.htmlTemplate with finding=finding first=0 showFindingNumbers=0 showVector=1 hideProactiveLabel=1 %}
         {% if not forloop.last %}
           <div class="page-break"></div>
         {% endif %}

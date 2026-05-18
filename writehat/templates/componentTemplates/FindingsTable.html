@@ -2,19 +2,16 @@
 {% include 'componentTemplates/Heading.html' with name=name %}
 {% include 'componentTemplates/SeverityLegend.html' with proactive=True %}
 
-  {% for fgroup in report.ordered_fgroups %}
-
-    <!-- Only include the title if there are findings -->
-    {% if fgroup.findings %}
+  {% for section in summary_groups %}
 
       <div class='finding-group-name'>
-        {{ fgroup.name }}
+        {{ section.group.name }}
       </div>
 
-      {% include fgroup.findingClass.summaryTemplate with fgroup=fgroup report=report %}
+      {% include section.group.findingClass.summaryTemplate with fgroup=section.group report=report %}
 
-    {% endif %}
-
+  {% empty %}
+    <p>No finding groups with findings are available.</p>
   {% endfor %}
 
 </section>

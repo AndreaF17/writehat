@@ -8,7 +8,7 @@
     <div class="finding-table">
         <div class='finding-header'>
             <div class='finding-severity background-color-severity'>
-                {{ finding.severity }}
+                {% if hideProactiveLabel %}Informational{% else %}{{ finding.severity }}{% endif %}
             </div>
             <div class='finding-title'>
                 [{{ finding.number }}] {{ finding.name }}

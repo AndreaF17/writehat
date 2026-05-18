@@ -140,7 +140,13 @@ def reportEdit(request,uuid):
     log.debug("reportEdit() called; UUID: {0}".format(uuid))
     log.debug("Found {0} available components".format(len(settings.VALID_COMPONENTS)))
 
-    report = Report.get(id=uuid)
+    try:
+        report = Report.get(id=uuid)
+    except Report.DoesNotExist:
+        log.warning(f"Report not found for edit view: {uuid}")
+        messages.error(request, "The requested report no longer exists.")
+        return redirect('/engagements')
+
     report.populateForm()
 
     return render(request,"pages/reportEdit.html", \

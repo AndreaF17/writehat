@@ -38,9 +38,21 @@ class Component(BaseComponent):
         group_counter = 0
         for finding_group in self._get_finding_groups(report):
             finding_group._report_object = report
-            findings = list(finding_group.findings)
+            findings = []
+            seen_finding_ids = set()
+            for finding in finding_group.findings:
+                finding_id = str(getattr(finding, 'id', ''))
+                if finding_id in seen_finding_ids:
+                    continue
+                seen_finding_ids.add(finding_id)
+                findings.append(finding)
             if not findings:
                 continue
+
+            abridged_findings = [
+                finding for finding in findings
+                if getattr(finding, 'affectedResources', None)
+            ]
 
             group_counter += 1
             if index_prefix:
@@ -51,6 +63,7 @@ class Component(BaseComponent):
             group_sections.append({
                 'group': finding_group,
                 'findings': findings,
+                'abridged_findings': abridged_findings,
                 'toc_index': group_index,
             })
 
