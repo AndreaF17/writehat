@@ -201,6 +201,21 @@ $().ready( function() {
     let paged = new Paged.Previewer()
 	paged.preview(flowText.content).then((flow) => {
         hljs.highlightAll();
+        // Initialize component charts (e.g. VulnerabilityChart).
+        // <script> tags inside <template id="report-body"> are not executed
+        // by the browser, so Chart.js charts must be initialized here.
+        // A small delay lets paged.js settle the final layout.
+        if (typeof initVulnerabilityCharts === "function") {
+            setTimeout(function () {
+                try {
+                    initVulnerabilityCharts(document);
+                } catch (e) {
+                    console.error("initVulnerabilityCharts failed:", e);
+                }
+            }, 50);
+        } else {
+            console.warn("initVulnerabilityCharts is not defined: VulnerabilityChart.js not loaded?");
+        }
         let t1 = performance.now();
         console.log("Rendering " + flow.total + " pages took " + (t1 - t0) + " milliseconds.");
     })
