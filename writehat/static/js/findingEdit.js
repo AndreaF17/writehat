@@ -44,6 +44,369 @@ function setCategoryID() {
 }
 
 
+let findingPreviewTimer = null;
+
+function configureFindingSplitPaneLayout() {
+  var paneContent = $("#writehat-content .paneContent");
+  if (!paneContent.length) {
+    return;
+  }
+
+  paneContent.css({
+    height: "85vh",
+    overflow: "hidden",
+  });
+
+  paneContent.children(".pane").css({
+    height: "100%",
+    overflowY: "hidden",
+  });
+
+  $("#leftPane").css("overflowY", "auto");
+  $("#rightPane").css({
+    overflowY: "hidden",
+    overflowX: "hidden",
+  });
+
+  var findingPreview = document.getElementById("findingPreview");
+  if (findingPreview && findingPreview.style) {
+    findingPreview.style.setProperty("overflow-y", "auto", "important");
+    findingPreview.style.setProperty("overflow-x", "hidden", "important");
+  }
+}
+
+function fitFindingPreviewPage(previewDocument) {
+  if (!previewDocument || !previewDocument.documentElement) {
+    return;
+  }
+
+  var page = previewDocument.querySelector("section.container.component.part");
+  if (!page) {
+    return;
+  }
+
+  var viewportWidth = previewDocument.documentElement.clientWidth || 0;
+  var pageWidthPx = 8.5 * 96;
+  var gutterPx = 24;
+  var scale = Math.min(1, (viewportWidth - gutterPx) / pageWidthPx);
+
+  if (!isFinite(scale) || scale <= 0) {
+    scale = 1;
+  }
+
+  previewDocument.documentElement.style.setProperty(
+    "--finding-preview-scale",
+    String(scale),
+  );
+
+  var scaledPageHeight = Math.ceil(page.scrollHeight * scale + gutterPx);
+
+  if (previewDocument.body) {
+    previewDocument.body.style.minHeight = scaledPageHeight + "px";
+  }
+
+  var frameElement =
+    previewDocument.defaultView && previewDocument.defaultView.frameElement;
+  if (frameElement) {
+    frameElement.style.height = scaledPageHeight + "px";
+    frameElement.style.minHeight = scaledPageHeight + "px";
+  }
+}
+
+function bindFindingPreviewWheelProxy(previewDocument) {
+  if (!previewDocument || previewDocument.__findingWheelProxyBound) {
+    return;
+  }
+
+  var frameElement =
+    previewDocument.defaultView && previewDocument.defaultView.frameElement;
+  if (!frameElement) {
+    return;
+  }
+
+  var scrollContainer = frameElement.closest("#findingPreview");
+  if (!scrollContainer) {
+    return;
+  }
+
+  previewDocument.addEventListener(
+    "wheel",
+    function (event) {
+      if (!event || typeof event.deltaY !== "number") {
+        return;
+      }
+
+      var maxScroll =
+        scrollContainer.scrollHeight - scrollContainer.clientHeight;
+      if (maxScroll <= 0) {
+        return;
+      }
+
+      scrollContainer.scrollTop += event.deltaY;
+      event.preventDefault();
+    },
+    { passive: false },
+  );
+
+  previewDocument.__findingWheelProxyBound = true;
+}
+
+function applyFindingPreviewOverrides(previewDocument) {
+  if (!previewDocument) {
+    return;
+  }
+
+  var styleId = "finding-preview-overrides";
+  var existingStyle = previewDocument.getElementById(styleId);
+  if (existingStyle) {
+    existingStyle.remove();
+  }
+
+  var styleNode = previewDocument.createElement("style");
+  styleNode.id = styleId;
+  styleNode.textContent = `
+    :root {
+      --finding-preview-page-width: 8.5in;
+      --finding-preview-scale: 1;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ececec;
+      height: 100%;
+    }
+
+    html {
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .container.component.part {
+      --page-content-width: calc(var(--finding-preview-page-width) - 2rem);
+      --page-content-height: auto;
+      flex: 0 0 auto;
+      flex-shrink: 0;
+      width: var(--finding-preview-page-width);
+      max-width: none;
+      max-height: none;
+      padding: 1rem;
+      margin: .75rem 0;
+      box-sizing: border-box;
+      background: #fff;
+      transform: scale(var(--finding-preview-scale));
+      transform-origin: top center;
+    }
+
+    .finding-header {
+      display: flex;
+      flex-direction: row !important;
+      align-items: stretch;
+      min-width: 0;
+    }
+
+    .finding-severity {
+      flex: 0 0 11rem !important;
+      width: 11rem !important;
+      min-width: 11rem !important;
+      max-width: 11rem !important;
+      height: auto !important;
+      box-sizing: border-box;
+      padding: 1rem .5rem;
+      line-height: 1.2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .finding-title {
+      flex: 1 1 auto;
+      min-width: 0;
+      width: auto;
+      max-width: none;
+      height: auto !important;
+      box-sizing: border-box;
+      padding: 1rem !important;
+      display: flex;
+      align-items: center;
+    }
+
+    .finding {
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+    }
+
+    .finding-table {
+      height: auto !important;
+      min-height: 0 !important;
+      flex-grow: 0 !important;
+      width: 100%;
+      max-width: 100%;
+      overflow: visible !important;
+    }
+
+    .finding-content {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      min-width: 0;
+      height: auto !important;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .finding-content-header {
+      float: none;
+      flex: 0 0 11rem;
+      min-width: 11rem;
+      max-width: 11rem;
+      height: auto !important;
+      box-sizing: border-box;
+    }
+
+    .finding-content-body {
+      margin-left: 0;
+      width: auto;
+      max-width: none;
+      min-width: 0;
+      flex: 1 1 auto;
+      height: auto !important;
+      box-sizing: border-box;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .finding .finding-content:last-child {
+      height: auto !important;
+    }
+
+    .finding-content-header.cvss-vector + .finding-content-body {
+      word-break: break-all;
+    }
+
+    .finding-content-body pre,
+    .finding-content-body code {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .finding-content-body pre {
+      width: 100%;
+      max-width: 100%;
+      margin-right: 0;
+      box-sizing: border-box;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
+
+    .finding-content-body pre code {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      margin: 0;
+    }
+
+    .finding,
+    .finding-table {
+      overflow-x: visible;
+    }
+  `;
+
+  if (previewDocument.head) {
+    previewDocument.head.appendChild(styleNode);
+  } else if (previewDocument.documentElement) {
+    previewDocument.documentElement.appendChild(styleNode);
+  }
+
+  bindFindingPreviewWheelProxy(previewDocument);
+  fitFindingPreviewPage(previewDocument);
+}
+
+function refreshFindingPreview() {
+  var previewFrame = $("#finding-preview-frame")[0] || $("#preview-frame")[0];
+  var previewURL = $("#finding-info").attr("finding-preview-url");
+  var form = $("#findingForm");
+
+  if (!previewFrame || !previewURL || !form.length) {
+    return;
+  }
+
+  $.ajax({
+    url: previewURL,
+    type: "POST",
+    data: form.serialize(),
+    success: function (response) {
+      var previewDocument =
+        previewFrame.contentDocument || previewFrame.contentWindow.document;
+      previewDocument.open();
+      previewDocument.write(response);
+      previewDocument.close();
+      applyFindingPreviewOverrides(previewDocument);
+    },
+    error: function () {
+      // best effort: avoid noisy errors while form values are mid-edit
+    },
+  });
+}
+
+function queueFindingPreviewRefresh(delay = 300) {
+  clearTimeout(findingPreviewTimer);
+  findingPreviewTimer = setTimeout(refreshFindingPreview, delay);
+}
+
+function bindFindingPreviewEvents() {
+  var form = $("#findingForm");
+  if (
+    !form.length ||
+    !($("#finding-preview-frame").length || $("#preview-frame").length)
+  ) {
+    return;
+  }
+
+  form.off(".findingPreview");
+  form.on(
+    "input.findingPreview change.findingPreview",
+    "input, textarea, select",
+    function () {
+      queueFindingPreviewRefresh();
+    },
+  );
+
+  $(".CodeMirror").off(".findingPreview");
+  $(".CodeMirror").on("keyup.findingPreview paste.findingPreview", function () {
+    queueFindingPreviewRefresh();
+  });
+
+  $(window).off("resize.findingPreview");
+  $(window).on("resize.findingPreview", function () {
+    var previewFrame = $("#finding-preview-frame")[0] || $("#preview-frame")[0];
+    if (!previewFrame) {
+      return;
+    }
+
+    var previewDocument =
+      previewFrame.contentDocument ||
+      (previewFrame.contentWindow && previewFrame.contentWindow.document);
+    fitFindingPreviewPage(previewDocument);
+  });
+
+  queueFindingPreviewRefresh(0);
+}
+
+
 function findingSave() {
   let form = $('.writehat-form').closest('form');
   let post_url = form.attr('action');
@@ -75,7 +438,7 @@ function findingSave() {
 }
 
 
-// Update the CVSS/DREAD vector string & severity based on current selections
+// Update the CVSS/CVSS4/DREAD vector string and severity based on current selections
 function updateRiskBadge() {
 
   var form = $('.writehat-form').closest('form');
@@ -83,14 +446,16 @@ function updateRiskBadge() {
   var badgeContent = $('.risk-badge').text().trim().toUpperCase();
 
   // determine scoring type based on form fields
-  if ($('#id_cvssAV').length) {
-    var scoringType = 'CVSS';
-  } else if ($('#id_dreadDamage').length) {
-    var scoringType = 'DREAD';
+  if ($("#id_cvss4AV").length) {
+    var scoringType = "CVSS4";
+  } else if ($("#id_cvssAV").length) {
+    var scoringType = "CVSS";
+  } else if ($("#id_dreadDamage").length) {
+    var scoringType = "DREAD";
   } else {
-    var scoringType = 'PROACTIVE';
-    $('.risk-badge').attr('finding-severity', 'Proactive');
-    $('.risk-badge .textButton-text').text('Proactive');
+    var scoringType = "PROACTIVE";
+    $(".risk-badge").attr("finding-severity", "Proactive");
+    $(".risk-badge .textButton-text").text("Proactive");
   }
 
   if (scoringType != 'PROACTIVE') {
@@ -189,49 +554,63 @@ function refreshFigures() {
 }
 
 function showAdvancedCheckbox() {
-  if (scoringType == 'CVSS') {
+  if (scoringType == "CVSS" || scoringType == "CVSS4") {
     // create new row for advanced checkbox
-    if (!($('#advanced-choices-row').length)) {
-      $('.writehat-form tr:nth-child(18)').after('<tr id="advanced-choices-row"><th class="text-warning">Show Advanced:</th><td></td></tr>');
-      $('#show-advanced-choices').detach().appendTo(('#advanced-choices-row > td'));
+    if (!$("#advanced-choices-row").length) {
+      $(".writehat-form tr:nth-child(18)").after(
+        '<tr id="advanced-choices-row"><th class="text-warning">Show Advanced:</th><td></td></tr>',
+      );
+      $("#show-advanced-choices")
+        .detach()
+        .appendTo("#advanced-choices-row > td");
     }
-    
+
     // show/hide when toggled
-    $('#finding-advanced-checkbox').off().change(function() {
-      if (this.checked) {
-        $('.finding-advanced-choice').each(function() {
-          $(this).closest('tr').show();
-        })
-      } else {
-        $('.finding-advanced-choice').each(function() {
-          $(this).closest('tr').hide();
-        })
-      }
-    })
+    $("#finding-advanced-checkbox")
+      .off()
+      .change(function () {
+        if (this.checked) {
+          $(".finding-advanced-choice").each(function () {
+            $(this).closest("tr").show();
+          });
+        } else {
+          $(".finding-advanced-choice").each(function () {
+            $(this).closest("tr").hide();
+          });
+        }
+      });
 
     // hide advanced options by default
-    var advanced_choices = $('.finding-advanced-choice');
-    var advanced_choice_values = advanced_choices.map(function(x,y) {
-      return y.value;
-    }).toArray();
+    var advanced_choices = $(".finding-advanced-choice");
+    var advanced_choice_values = advanced_choices
+      .map(function (x, y) {
+        return y.value;
+      })
+      .toArray();
 
     // unless one of them has been changed already
-    if (!(advanced_choice_values.some(function(v){return v !== 'X'}))) {
-      advanced_choices.each(function() {
-        $(this).closest('tr').hide();
+    if (
+      !advanced_choice_values.some(function (v) {
+        return v !== "X";
       })
+    ) {
+      advanced_choices.each(function () {
+        $(this).closest("tr").hide();
+      });
     } else {
-       $('#finding-advanced-checkbox').click();
+      $("#finding-advanced-checkbox").click();
     }
   } else {
     // TODO: hide DREAD Descriptions and Affected Resources
 
-    $('#show-advanced-choices').hide();
+    $("#show-advanced-choices").hide();
   }
 }
 
 
 function refreshJS() {
+  configureFindingSplitPaneLayout();
+
   // update risk preview
   updateRiskBadge();
 
@@ -264,6 +643,7 @@ function refreshJS() {
   loadMarkdown();
   $('.selectpicker').selectpicker();
   refreshFigures();
+  bindFindingPreviewEvents();
 }
 
 
@@ -326,6 +706,10 @@ function loadToolTips() {
       
       if (scoringType == 'CVSS'){
         $('#tooltipSelect-modalLabel').text('CVSS Info');
+      }
+
+      if (scoringType == "CVSS4") {
+        $("#tooltipSelect-modalLabel").text("CVSS4 Info");
       }
   
       tooltipSelectModal.modal('show');

@@ -5,8 +5,8 @@ from writehat.models import *
 from django.forms import ModelForm, TextInput
 from django.core.exceptions import ValidationError
 from writehat.lib.errors import EngagementFgroupError
-from writehat.lib.engagementFinding import CVSSEngagementFinding, DREADEngagementFinding, ProactiveEngagementFinding
-from writehat.lib.findingForm import CVSSEngagementFindingForm, DREADEngagementFindingForm, ProactiveEngagementFindingForm
+from writehat.lib.engagementFinding import CVSSEngagementFinding, CVSS4EngagementFinding, DREADEngagementFinding, ProactiveEngagementFinding
+from writehat.lib.findingForm import CVSSEngagementFindingForm, CVSS4EngagementFindingForm, DREADEngagementFindingForm, ProactiveEngagementFindingForm
 
 
 log = logging.getLogger(__name__)
@@ -186,6 +186,13 @@ class CVSSFindingGroup(BaseFindingGroup):
     findingClass = CVSSEngagementFinding
     scoringType = models.CharField(default='CVSS', editable=False, max_length=50)
     prefix = models.CharField(verbose_name="Finding Prefix", max_length=50, default='T')
+
+
+class CVSS4FindingGroup(BaseFindingGroup):
+
+    findingClass = CVSS4EngagementFinding
+    scoringType = models.CharField(default='CVSS4', editable=False, max_length=50)
+    prefix = models.CharField(verbose_name="Finding Prefix", max_length=50, default='T4')
 
 
 

@@ -11,9 +11,9 @@ from writehat.lib.engagement import Engagement
 from writehat.lib.pageTemplate import PageTemplate
 from writehat.lib.report import Report, SavedReport
 from writehat.lib.findingCategory import DatabaseFindingCategory
-from writehat.lib.findingGroup import CVSSFindingGroup, DREADFindingGroup, BaseFindingGroup, ProactiveFindingGroup
-from writehat.lib.engagementFinding import CVSSEngagementFinding, DREADEngagementFinding, ProactiveEngagementFinding
-from writehat.lib.finding import CVSSDatabaseFinding,DREADFinding, DREADDatabaseFinding, ProactiveDatabaseFinding, ProactiveFinding
+from writehat.lib.findingGroup import CVSSFindingGroup, CVSS4FindingGroup, DREADFindingGroup, BaseFindingGroup, ProactiveFindingGroup
+from writehat.lib.engagementFinding import CVSSEngagementFinding, CVSS4EngagementFinding, DREADEngagementFinding, ProactiveEngagementFinding
+from writehat.lib.finding import CVSSDatabaseFinding, CVSS4DatabaseFinding, DREADFinding, DREADDatabaseFinding, ProactiveDatabaseFinding, ProactiveFinding
 
 
 MONGO_CONFIG = settings.MONGO_CONFIG
@@ -49,10 +49,12 @@ def dbExport():
 
     # pull all ORM data
     files.append(('CVSSEngagementFinding.json',serializers.serialize('json', CVSSEngagementFinding.objects.all())))
+    files.append(('CVSS4EngagementFinding.json',serializers.serialize('json', CVSS4EngagementFinding.objects.all())))
     files.append(('DREADEngagementFinding.json',serializers.serialize('json', DREADEngagementFinding.objects.all())))
     files.append(('ProactiveEngagementFinding.json',serializers.serialize('json', ProactiveEngagementFinding.objects.all())))
     files.append(('DREADFindingGroup.json',serializers.serialize('json', DREADFindingGroup.objects.all())))
     files.append(('CVSSFindingGroup.json',serializers.serialize('json', CVSSFindingGroup.objects.all())))
+    files.append(('CVSS4FindingGroup.json',serializers.serialize('json', CVSS4FindingGroup.objects.all())))
     files.append(('ProactiveFindingGroup.json',serializers.serialize('json', ProactiveFindingGroup.objects.all())))
     files.append(('BaseFindingGroup.json',serializers.serialize('json', BaseFindingGroup.objects.all())))
     files.append(('Engagement.json',serializers.serialize('json', Engagement.objects.all())))
@@ -60,6 +62,7 @@ def dbExport():
     files.append(('SavedReport.json',serializers.serialize('json', SavedReport.objects.all())))
     files.append(('PageTemplate.json',serializers.serialize('json', PageTemplate.objects.all())))
     files.append(('CVSSDatabaseFinding.json',serializers.serialize('json', CVSSDatabaseFinding.objects.all())))
+    files.append(('CVSS4DatabaseFinding.json',serializers.serialize('json', CVSS4DatabaseFinding.objects.all())))
     files.append(('DREADDatabaseFinding.json',serializers.serialize('json', DREADDatabaseFinding.objects.all())))
     files.append(('ProactiveDatabaseFinding.json',serializers.serialize('json', ProactiveDatabaseFinding.objects.all())))
     files.append(('DatabaseFindingCategory.json',serializers.serialize('json', DatabaseFindingCategory.objects.all())))

@@ -10,7 +10,13 @@
 
 {% block headerRight %}
   {% include 'snippets/textButton.html' with id='categoryAdd' name='New Category' type='plus' class='btn-light border border-dark categoryAddButton' %}
+  {% if user.is_superuser %}
+    {% include 'snippets/textButton.html' with id='categoryImportCWERemote' name='Sync CWE' type='sync' class='btn-light border border-primary' %}
+    {% include 'snippets/textButton.html' with id='categoryImportCWE' name='Import CWE' type='upload' class='btn-light border border-info' %}
+    <span id='cweSyncStatus' class='d-inline-block align-middle ml-2 text-muted' style='font-size: .9rem;'></span>
+  {% endif %}
   {% include 'snippets/textButton.html' with href='/findings/proactive/new' name='New Proactive Finding' type='plus' class='bg-proactive' %}
+  {% include 'snippets/textButton.html' with href='/findings/cvss4/new' name='New CVSS4 Finding' type='plus' class='bg-cvss4' %}
   {% include 'snippets/textButton.html' with href='/findings/cvss/new' name='New CVSS Finding' type='plus' class='bg-cvss' %}
   {% include 'snippets/textButton.html' with href='/findings/dread/new' name='New DREAD Finding' type='plus' class='bg-dread' %}
 {% endblock %}

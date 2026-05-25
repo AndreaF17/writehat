@@ -5,16 +5,17 @@ from writehat.lib.finding import *
 from django.conf import settings
 from django.urls import path, include
 from django.conf.urls import url
-from django.contrib.auth.views import LoginView,LogoutView
+from django.contrib.auth.views import LogoutView
 
 uuid = r'(?P<uuid>[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12})'
 fgroup = r'(?P<fgroup>[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12})'
-gtype = r'(?P<gtype>[a-z]{4,9})'
+gtype = r'(?P<gtype>[a-z0-9]{4,10})'
 
 urlpatterns = [
 
     # Authentication URLS
-    path('login', LoginView.as_view(), name='login'),
+    path('login', views.loginPage, name='login'),
+    path('login/sso', views.loginSSO, name='login-sso'),
     path('logout', LogoutView.as_view(), name='logout'),
     path('account', views.accountEdit),
 
@@ -25,6 +26,7 @@ urlpatterns = [
     # Validation
     path('validation/whitelists', views.validationWhitelists),
     path('validation/cvss', views.validationCVSS),
+    path('validation/cvss4', views.validationCVSS4),
     path('validation/dread', views.validationDREAD),
 
     # Images urls
@@ -40,12 +42,17 @@ urlpatterns = [
     # findings urls
     path('findings', views.findingsList),
     path('findings/cvss/new', views.findingCvssNew),
+    path('findings/cvss4/new', views.findingCvss4New),
     path('findings/dread/new', views.findingDreadNew),
     path('findings/proactive/new', views.findingProactiveNew),
     path('findings/create', views.findingCreate),
     path('findings/category/add', views.findingCategoryAdd),
+    path('findings/category/import/cwe', views.findingCategoryImportCWE),
+    path('findings/category/import/cwe/remote', views.findingCategoryImportCWERemote),
+    path('findings/category/import/cwe/status', views.findingCategoryImportCWEStatus),
     url(rf'^findings/category/edit/{uuid}$', views.findingCategoryEdit),
     url(rf'^findings/category/delete/{uuid}$', views.findingCategoryDelete),
+    url(rf'^findings/preview/{uuid}$', views.findingPreview),
     url(rf'^findings/edit/{uuid}$', views.findingEdit),
     url(rf'^findings/delete/{uuid}$', views.findingDelete),
     url(rf'^findings/import/{uuid}', views.engagementFindingExport),
@@ -104,6 +111,7 @@ urlpatterns = [
     url(rf'^engagements/{uuid}/excel$', views.engagementFindingExcel),
     
     url(rf'^engagements/fgroup/finding/edit/{uuid}$', views.engagementFindingEdit),
+    url(rf'^engagements/fgroup/finding/preview/{uuid}$', views.engagementFindingPreview),
     url(rf'^engagements/fgroup/finding/delete/{uuid}$', views.engagementFindingDelete),
     url(rf'^engagements/fgroup/{fgroup}/finding/import/{uuid}$', views.engagementFindingImport),
 
@@ -156,3 +164,6 @@ urlpatterns = [
     path('admin-tools/restore', views.admintoolsRestore),
 
 ]
+
+if settings.SSO_ENABLED:
+    urlpatterns.append(path('oidc/', include('mozilla_django_oidc.urls')))

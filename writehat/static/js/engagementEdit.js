@@ -1,9 +1,10 @@
 function updateFindingPrefix() {
   var prefixes = {
-    'CVSS': 'T',
-    'DREAD': 'NT',
-    'PROACTIVE': 'P'
-  }
+    CVSS: "T",
+    CVSS4: "T4",
+    DREAD: "NT",
+    PROACTIVE: "P",
+  };
   var scoringType = $('#id_scoringType').val()
   $('.modal').find('input[name="prefix"]').val(prefixes[scoringType]);
 }
@@ -214,6 +215,8 @@ $(document).ready(function() {
         var scoringType;
         if ($("#id_scoringType").val() == "CVSS") {
           scoringType = "cvss";
+        } else if ($("#id_scoringType").val() == "CVSS4") {
+          scoringType = "cvss4";
         } else if ($("#id_scoringType").val() == "DREAD") {
           scoringType = "dread";
         } else if ($("#id_scoringType").val() == "PROACTIVE") {

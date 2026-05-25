@@ -6,6 +6,7 @@ blessings==1.7
 certifi==2022.12.7
 cffi==1.15.1
 cryptography==39.0.2
+cvss==3.6
 Django==3.1.14
 django-currentuser==0.5.3
 django-python3-ldap==0.11.4
@@ -18,6 +19,7 @@ importlib-metadata==6.0.0
 ldap3==2.9.1
 Markdown==3.4.1
 mongo-tools==0.0.2
+mozilla-django-oidc==2.0.0
 openpyxl==3.1.1
 outcome==1.2.0
 pyasn1==0.4.8

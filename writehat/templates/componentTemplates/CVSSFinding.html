@@ -1,6 +1,6 @@
 {% load custom_tags %}
 
-<div id="finding-{{ finding.id }}" scoring-type="CVSS" class="finding" finding-severity="{{ finding.severity }}">
+<div id="finding-{{ finding.id }}" scoring-type="{{ finding.scoringType }}" class="finding" finding-severity="{{ finding.severity }}">
     <div>
         {% if first and not hideFindingHeading %}
             {% include 'componentTemplates/Heading.html' with classes="finding-heading" %}
@@ -20,10 +20,14 @@
         {% if showVector %}
             <div class='finding-content'>
                 <div class='finding-content-header cvss-vector'>
-                    CVSS 3.1 Vector
+                    {% if finding.scoringType == 'CVSS4' %}
+                        CVSS 4.0 Vector
+                    {% else %}
+                        CVSS 3.1 Vector
+                    {% endif %}
                 </div>
                 <div class='finding-content-body'>
-                    {{ finding.cvss.vector }}
+                    {{ finding.vector }}
                 </div>
             </div>
         {% endif %}

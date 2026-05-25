@@ -31,6 +31,7 @@ th.findingName {
 
 div.status-container.dread .findingAttr.dread,
 div.status-container.cvss .findingAttr.cvss,
+div.status-container.cvss4 .findingAttr.cvss,
 div.status-container.proactive .findingAttr.proactive {
     display: table-cell;
 }

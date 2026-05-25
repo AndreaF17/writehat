@@ -88,6 +88,7 @@ class BaseComponent():
         'type': StringField(templatable=True),
         'pageBreakBefore': BoolField(templatable=True),
         'showTitle': BoolField(templatable=True),
+        'editable': BoolField(templatable=True, default=True),
         'reviewStatus': ReviewStatusField(templatable=False),
     }
 
@@ -565,6 +566,7 @@ class ComponentForm(forms.Form):
     name = forms.CharField(label='Title', required=False)
     pageBreakBefore = forms.BooleanField(label='Start On New Page?', required=False)
     showTitle = forms.BooleanField(label='Show Title?', required=False)
+    editable = forms.BooleanField(label='Editable After Template Import?', required=False, initial=True)
     reviewStatus = forms.ChoiceField(label='Review Status', required=False,
                                      choices=ReviewStatusField._choices.items(),
                                      widget=SelectBase(fieldName='reviewStatus',

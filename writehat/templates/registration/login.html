@@ -17,7 +17,15 @@
               {% csrf_token %}
               {{ form.as_table }}
             </table>
+            {% if next %}
+              <input type="hidden" name="next" value="{{ next }}" />
+            {% endif %}
             <button class="d-inline btn btn-md btn-block btn-outline-primary text-uppercase p-2" type="submit" style="width: 26.5rem">Log In</button>
+            {% if SSO_ENABLED %}
+              <a class="d-inline btn btn-md btn-block btn-outline-secondary text-uppercase p-2 mt-3" style="width: 26.5rem" href="/login/sso{% if next %}?next={{ next|urlencode }}{% endif %}">
+                Sign In With {{ SSO_DISPLAY_NAME }}
+              </a>
+            {% endif %}
           </form>
         </div>
       </div>

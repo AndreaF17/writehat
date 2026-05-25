@@ -3,13 +3,15 @@ import openpyxl
 
 log = logging.getLogger(__name__)
 
-def generateExcel(CVSSEngagementFindings, DREADEngagementFindings, ProactiveEngagementFindings):
+def generateExcel(CVSSEngagementFindings, CVSS4EngagementFindings, DREADEngagementFindings, ProactiveEngagementFindings):
 
     workbook = openpyxl.Workbook()
     CVSSSheet = workbook.active
+    CVSS4Sheet = workbook.create_sheet()
     DREADSheet = workbook.create_sheet()
     ProactiveSheet = workbook.create_sheet()
     CVSSSheet.title = "CVSS Findings"
+    CVSS4Sheet.title = "CVSS4 Findings"
     DREADSheet.title = "DREAD Findings"
     ProactiveSheet.title = "Proactive Findings"
 
@@ -41,8 +43,8 @@ def generateExcel(CVSSEngagementFindings, DREADEngagementFindings, ProactiveEnga
             '"%s"' % i.remediation,
             '"%s"' % i.toolsUsed,
             i.vector,
-            i.cvss.severity,
-            i.cvss.score,
+            i.severity,
+            i.score,
             '"%s"' % i.references,
         ]
 
@@ -51,6 +53,38 @@ def generateExcel(CVSSEngagementFindings, DREADEngagementFindings, ProactiveEnga
         # Assign the titles for each cell of the header
         for col_num, cell_value in enumerate(row, 1):
             cell = CVSSSheet.cell(row=row_num, column=col_num)
+            cell.value = cell_value
+
+    ### CVSS4 Sheet ###
+
+    columns = ['name','category','background','description','affectedResources','proofOfConcept','remediation','toolsUsed','vector','severity','cvss4Score','references']
+    row_num = 1
+
+    for col_num, column_title in enumerate(columns, 1):
+        cell = CVSS4Sheet.cell(row=row_num, column=col_num)
+        cell.value = column_title
+
+    for i in CVSS4EngagementFindings:
+        log.debug("  Finding: {0}".format(i.id))
+        row_num += 1
+
+        row = [
+            i.name,
+            ' -> '.join(i.category.getCategoryBreadcrumbs()[::-1]),
+            '"%s"' % i.background,
+            '"%s"' % i.description,
+            '"%s"' % i.affectedResources,
+            '"%s"' % i.proofOfConcept,
+            '"%s"' % i.remediation,
+            '"%s"' % i.toolsUsed,
+            i.vector,
+            i.severity,
+            i.score,
+            '"%s"' % i.references,
+        ]
+
+        for col_num, cell_value in enumerate(row, 1):
+            cell = CVSS4Sheet.cell(row=row_num, column=col_num)
             cell.value = cell_value
 
     ### DREAD Sheet ###

@@ -1,0 +1,185 @@
+{% load custom_tags %}
+<html>
+  <head>
+    <link rel='stylesheet' href='/static/css/report/global.css'/>
+    <link rel='stylesheet' href='/static/css/component/FindingsList.css' />
+    <style>
+      :root {
+        --finding-preview-page-width: 8.5in;
+        --finding-preview-scale: 1;
+        --page-content-width: calc(var(--finding-preview-page-width) - 2rem);
+        --page-content-height: auto;
+      }
+
+      html, body {
+        background-color: #ececec;
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+
+      html {
+        overflow: hidden;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      .container.component.part {
+        --page-content-width: calc(var(--finding-preview-page-width) - 2rem);
+        --page-content-height: auto;
+        flex: 0 0 auto;
+        flex-shrink: 0;
+        width: var(--finding-preview-page-width);
+        max-width: none;
+        max-height: none;
+        padding: 1rem;
+        margin: .75rem 0;
+        box-sizing: border-box;
+        background-color: #fff;
+        transform: scale(var(--finding-preview-scale));
+        transform-origin: top center;
+      }
+
+      .finding-header {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        min-width: 0;
+      }
+
+      .finding-severity {
+        flex: 0 0 11rem;
+        width: 11rem;
+        min-width: 11rem;
+        max-width: 11rem;
+        height: auto;
+        box-sizing: border-box;
+        padding: 1rem .5rem;
+        line-height: 1.2;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      .finding-title {
+        flex: 1 1 auto;
+        min-width: 0;
+        width: auto;
+        max-width: none;
+        height: auto;
+        box-sizing: border-box;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+      }
+
+      .finding-title,
+      .finding-content-body {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      .finding {
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+      }
+
+      .finding-table {
+        height: auto !important;
+        min-height: 0 !important;
+        flex-grow: 0 !important;
+        width: 100%;
+        max-width: 100%;
+        overflow: visible !important;
+      }
+
+      .finding-content {
+        display: flex;
+        align-items: stretch;
+        min-width: 0;
+        height: auto !important;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+
+      .finding-content-header {
+        float: none;
+        flex: 0 0 11rem;
+        min-width: 11rem;
+        max-width: 11rem;
+        height: auto !important;
+        box-sizing: border-box;
+      }
+
+      .finding-content-body {
+        margin-left: 0;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        flex: 1 1 auto;
+        height: auto !important;
+        box-sizing: border-box;
+      }
+
+      .finding .finding-content:last-child {
+        height: auto !important;
+      }
+
+      .finding-content-header.cvss-vector + .finding-content-body {
+        word-break: break-all;
+      }
+
+      .finding,
+      .finding-table {
+        overflow-x: hidden;
+      }
+
+      .finding-content-body pre,
+      .finding-content-body code {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      .finding-content-body pre {
+        width: 100%;
+        max-width: 100%;
+        margin-right: 0;
+        box-sizing: border-box;
+        overflow-wrap: anywhere;
+        word-break: break-all;
+      }
+
+      .finding-content-body pre code {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      .page-break {
+        display: none !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <section class="container component part">
+      {% autoescape off %}
+        {{ finding_html }}
+      {% endautoescape %}
+    </section>
+  </body>
+</html>

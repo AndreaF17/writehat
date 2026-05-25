@@ -6,15 +6,18 @@ import base64
 import logging
 import uuid as uuidlib
 from datetime import datetime
+from urllib.parse import urlencode
 
 # django
 from django.conf import settings
+from django.template.loader import render_to_string
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.html import escape
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.views import LoginView
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
@@ -31,6 +34,7 @@ from django.contrib import messages
 from writehat import validation
 
 from writehat.lib.util import *
+from writehat.lib.cvss4 import *
 from writehat.lib.dread import *
 from writehat.lib.errors import *
 from writehat.lib.figure import *
@@ -71,6 +75,31 @@ def index(request):
     return HttpResponseRedirect('/engagements')
 
 
+@require_http_methods(['GET', 'POST'])
+@csrf_protect
+def loginPage(request):
+
+    if request.method == 'GET' and settings.SSO_ENABLED and settings.SSO_AUTO_REDIRECT:
+        return loginSSO(request)
+
+    return LoginView.as_view(template_name='registration/login.html')(request)
+
+
+@require_http_methods(['GET'])
+@csrf_protect
+def loginSSO(request):
+
+    if not settings.SSO_ENABLED:
+        return HttpResponse('SSO is not enabled', status=404)
+
+    next_url = request.GET.get('next', '').strip()
+    query = ''
+    if next_url:
+        query = '?' + urlencode({'next': next_url})
+
+    return redirect(f'/oidc/authenticate/{query}')
+
+
 # Validation - returns allowed characters
 @require_http_methods(['GET'])
 @csrf_exempt
@@ -89,6 +118,23 @@ def validationCVSS(request):
 
     post_data = request.POST.dict()
     cvss_data = CVSS.fromDict(post_data)
+
+    return JsonResponse({
+        'vector': cvss_data.vector,
+        'severity': cvss_data.severity,
+        'score': cvss_data.score,
+    })
+
+
+@require_http_methods(['POST'])
+@csrf_exempt
+def validationCVSS4(request):
+
+    post_data = request.POST.dict()
+    try:
+        cvss_data = CVSS4.fromDict(post_data)
+    except AssertionError as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
     return JsonResponse({
         'vector': cvss_data.vector,
@@ -192,6 +238,18 @@ def componentReviewStatus(request,uuid):
         })
 
 
+def _component_locked_in_report(component):
+    try:
+        report = component.report
+    except (Report.DoesNotExist, SavedReport.DoesNotExist):
+        return False
+
+    if not isinstance(report, Report):
+        return False
+
+    return component.json.get('editable', True) is False
+
+
 # Renders the component editing form
 @csrf_protect
 @require_http_methods(['GET'])
@@ -200,6 +258,14 @@ def componentEdit(request,uuid,form=None):
     log.debug("componentEdit() called; UUID: {0}".format(uuid))
     #try:
     component = BaseComponent.get(uuid)
+
+    if _component_locked_in_report(component):
+        messages.error(request, 'This component is locked by the template and cannot be edited.')
+        return redirect(f"/engagements/report/{component.report.id}/edit")
+
+    if isinstance(component.report, Report):
+        component.form.fields.pop('editable', None)
+
     if hasattr(component, 'set_scores_initial_from_targets'):
         component.set_scores_initial_from_targets()
     #except:
@@ -221,8 +287,19 @@ def componentSave(request,uuid):
         component = BaseComponent.get(uuid)
         log.debug("BaseComponent.get instantiated")
 
+        if _component_locked_in_report(component):
+            response = HttpResponse('This component is locked by the template and cannot be edited.')
+            response.status_code = 403
+            return response
+
+        current_editable = component.json.get('editable', True)
+
         component.updateFromForm(request.POST)
         log.debug("Form data applied to component")
+
+        if isinstance(component.report, Report):
+            component._model['editable'] = current_editable
+            component.form.fields.pop('editable', None)
 
         if hasattr(component, 'set_scores_initial_from_targets'):
             component.set_scores_initial_from_targets()
@@ -688,6 +765,12 @@ def findingCvssNew(request):
     form = CVSSDatabaseFindingForm
     return render(request,"pages/findingNew.html",{"form":form,"scoringType":"CVSS"})
 
+
+def findingCvss4New(request):
+    log.debug("Called findingCvss4New")
+    form = CVSS4DatabaseFindingForm
+    return render(request, "pages/findingNew.html", {"form": form, "scoringType": "CVSS4"})
+
 # load the new database finding form with the dread form
 def findingDreadNew(request):
     log.debug("Called findingDreadNew")
@@ -702,6 +785,51 @@ def findingProactiveNew(request):
     return render(request,"pages/findingNew.html",{"form":form,"scoringType":"PROACTIVE"})
 
 
+def _render_finding_preview(request, finding, formClass=None):
+
+    if request.method == 'POST':
+        try:
+            if formClass is None:
+                finding.updateFromPostData(request.POST)
+            else:
+                finding.updateFromPostData(request.POST, formClass)
+        except Exception as e:
+            log.debug(f'finding preview: failed to apply incoming form data ({e})')
+
+    finding_html = render_to_string(
+        finding.htmlTemplate,
+        {
+            'finding': finding,
+            'first': True,
+            'hideFindingHeading': True,
+            'showFindingNumbers': True,
+            'showVector': True,
+            'hideProactiveLabel': False,
+        },
+        request=request
+    )
+
+    return render(request, "pages/findingPreview.html", {"finding_html": finding_html})
+
+
+@csrf_protect
+@xframe_options_exempt
+@require_http_methods(['POST', 'GET'])
+def findingPreview(request, uuid):
+
+    finding = BaseDatabaseFinding.get_child(id=uuid)
+    return _render_finding_preview(request, finding)
+
+
+@csrf_protect
+@xframe_options_exempt
+@require_http_methods(['POST', 'GET'])
+def engagementFindingPreview(request, uuid):
+
+    finding = EngagementFinding.get_child(uuid)
+    return _render_finding_preview(request, finding, formClass=finding.formClass)
+
+
 # Edit an existing "findings database" entry. Should be very similiar to findingsView, except with all the editing tools loaded.
 @csrf_protect
 @require_http_methods(['POST', 'GET'])
@@ -713,7 +841,14 @@ def findingEdit(request,uuid):
         finding.populateForm()
         #log.info(cvssFinding.form.data)
         #log.info(str(cvssFinding.form['categoryID']))
-        return render(request,"pages/findingEdit.html",{'finding': finding})
+        return render(
+            request,
+            "pages/findingEdit.html",
+            {
+                'finding': finding,
+                'previewURL': f'/findings/preview/{finding.id}'
+            }
+        )
 
     elif request.method == 'POST':
         finding.updateFromPostData(request.POST)
@@ -750,6 +885,8 @@ def findingCreate(request):
     # for security, check the value or form type. Anything other than CVSSForm or DREADForm creates and error        
     if scoringType == 'CVSS':
         finding = CVSSDatabaseFinding.new(request.POST)
+    elif scoringType == 'CVSS4':
+        finding = CVSS4DatabaseFinding.new(request.POST)
     elif scoringType == 'DREAD':
         finding = DREADDatabaseFinding.new(request.POST)
     elif scoringType == 'PROACTIVE':
@@ -862,9 +999,9 @@ def imageUpload(request):
         if 'findingParent' in request.POST:
             findingParent = request.POST["findingParent"]
             try:
-                CVSSEngagementFinding.get(id=findingParent)
+                EngagementFinding.get_child(id=findingParent)
                 log.debug(f"imageUpload called with findingParent {findingParent}")
-            except CVSSEngagementFinding.DoesNotExist:
+            except FindingError:
                 log.debug(f"imageUpload aborted - finding ID invalid")
                 raise ImagesUploadError(f'findingParent "{findingParent}" does not exist')
             imageModel.findingParent = request.POST["findingParent"]
@@ -977,6 +1114,57 @@ def findingCategoryAdd(request):
     return HttpResponse(newCategory.id)
 
 
+@csrf_protect
+@user_passes_test(lambda u: u.is_superuser)
+@require_http_methods(['POST'])
+def findingCategoryImportCWE(request):
+
+    if 'file' not in request.FILES:
+        return HttpResponse('Missing file', status=400)
+
+    uploaded_file = request.FILES['file']
+
+    try:
+        result = DatabaseFindingCategory.import_cwe_categories(uploaded_file)
+    except ValueError as e:
+        return HttpResponse(str(e), status=400)
+
+    return JsonResponse(result)
+
+
+@csrf_protect
+@user_passes_test(lambda u: u.is_superuser)
+@require_http_methods(['POST'])
+def findingCategoryImportCWERemote(request):
+
+    try:
+        result = DatabaseFindingCategory.import_cwe_categories_remote()
+    except ValueError as e:
+        return HttpResponse(str(e), status=400)
+
+    return JsonResponse(result)
+
+
+@csrf_protect
+@user_passes_test(lambda u: u.is_superuser)
+@require_http_methods(['GET'])
+def findingCategoryImportCWEStatus(request):
+
+    root_node = DatabaseFindingCategory.getRootNode()
+    cwe_parent = DatabaseFindingCategory.objects.filter(categoryParent=root_node.id, name='CWE').first()
+
+    if cwe_parent is None:
+        return JsonResponse({
+            'lastSynced': None,
+            'entries': 0,
+        })
+
+    return JsonResponse({
+        'lastSynced': cwe_parent.modifiedDate.isoformat(),
+        'entries': DatabaseFindingCategory.objects.filter(categoryParent=cwe_parent.id).count(),
+    })
+
+
 
 @csrf_protect
 @require_http_methods(['POST'])
@@ -1044,6 +1232,7 @@ def findingCategoryDelete(request, uuid):
     # Check and see if this category has children. If it does, deny the deletion
     categoryChildren = DatabaseFindingCategory.objects.filter(categoryParent=uuid)
     cvssFinding = CVSSDatabaseFinding.objects.filter(categoryID=uuid)
+    cvss4Finding = CVSS4DatabaseFinding.objects.filter(categoryID=uuid)
     dreadFinding = DREADDatabaseFinding.objects.filter(categoryID=uuid)
     proactiveFinding = ProactiveDatabaseFinding.objects.filter(categoryID=uuid)
 
@@ -1051,7 +1240,7 @@ def findingCategoryDelete(request, uuid):
         response = HttpResponse("Cannot remove categories with child categories", status=400)
         return response
 
-    if cvssFinding.exists() or dreadFinding.exists() or proactiveFinding.exists():
+    if cvssFinding.exists() or cvss4Finding.exists() or dreadFinding.exists() or proactiveFinding.exists():
         response = HttpResponse("Cannot remove categories with child findings", status=400)
         return response
 
@@ -1272,6 +1461,8 @@ def engagementFgroupCreate(request,uuid,gtype):
         p = DREADFindingGroup.new(uuid=uuid,postData=request.POST)
     elif gtype == "cvss":
         p = CVSSFindingGroup.new(uuid=uuid,postData=request.POST)
+    elif gtype == "cvss4":
+        p = CVSS4FindingGroup.new(uuid=uuid,postData=request.POST)
     elif gtype == "proactive":
         p = ProactiveFindingGroup.new(uuid=uuid,postData=request.POST)
     else:
@@ -1323,12 +1514,27 @@ def engagementFgroupList(request,uuid):
         CVSSFGroupList.append({'id':str(i.id),'name':str(i.name)})
     fgroupsDict['CVSS'] = CVSSFGroupList
 
+    CVSS4FGroupList = []
+    CVSS4Fgroups = CVSS4FindingGroup.objects.filter(engagementParent=uuid)
+    log.debug(list(CVSS4Fgroups))
+    for i in CVSS4Fgroups:
+        CVSS4FGroupList.append({'id': str(i.id), 'name': str(i.name)})
+    fgroupsDict['CVSS4'] = CVSS4FGroupList
+
     DreadFGroupList = []
     DreadFgroups = DREADFindingGroup.objects.filter(engagementParent=uuid)
     log.debug(list(DreadFgroups))
     for i in DreadFgroups:
         DreadFGroupList.append({'id':str(i.id),'name':str(i.name)})
     fgroupsDict['DREAD'] = DreadFGroupList
+
+    ProactiveFGroupList = []
+    ProactiveFgroups = ProactiveFindingGroup.objects.filter(engagementParent=uuid)
+    log.debug(list(ProactiveFgroups))
+    for i in ProactiveFgroups:
+        ProactiveFGroupList.append({'id': str(i.id), 'name': str(i.name)})
+    fgroupsDict['PROACTIVE'] = ProactiveFGroupList
+
     return JsonResponse(fgroupsDict)
 
 
@@ -1415,10 +1621,14 @@ def engagementFindingExport(request, uuid):
 
     if p.scoringType == 'CVSS':
          formClass = CVSSDatabaseFinding.formClass
+    elif p.scoringType == 'CVSS4':
+        formClass = CVSS4DatabaseFinding.formClass
     elif p.scoringType == 'DREAD':
         formClass = DREADDatabaseFinding.formClass
     elif p.scoringType == 'PROACTIVE':
         formClass = ProactiveDatabaseFinding.formClass
+    else:
+        raise EngagementError('Unknown finding scoringType for export')
 
     p.populateForm(formClass=formClass)
     return render(
@@ -1442,8 +1652,7 @@ def engagementFindingExport(request, uuid):
 def engagementFindingList(request,uuid):
     log.debug(f"engagementFindingList called for findingGroup {uuid}; request.method: {request.method}")
 
-
-    engagementFindings = CVSSEngagementFinding.objects.filter(findingGroup=uuid)
+    engagementFindings = BaseFindingGroup.get_child(id=uuid).findings
     log.debug(list(engagementFindings))
     if request.method == 'GET':
         return render(request,"panes/engagementFindingsListManual.html",{'engagementFindings':engagementFindings})
@@ -1465,11 +1674,14 @@ def engagementFindingExcel(request,uuid):
     log.debug(list(fgroups))
 
     CVSSEngagementFindings = []
+    CVSS4EngagementFindings = []
     DREADEngagementFindings = []
     ProactiveEngagementFindings = []
     for fgroup in fgroups:
         if fgroup.scoringType == "CVSS":
             CVSSEngagementFindings += fgroup.findings
+        elif fgroup.scoringType == 'CVSS4':
+            CVSS4EngagementFindings += fgroup.findings
         elif fgroup.scoringType == 'DREAD':
             DREADEngagementFindings += fgroup.findings
         elif fgroup.scoringType == 'PROACTIVE':
@@ -1490,6 +1702,7 @@ def engagementFindingExcel(request,uuid):
     # get finished workbook from excel.py
     workbook = generateExcel(
         CVSSEngagementFindings,
+        CVSS4EngagementFindings,
         DREADEngagementFindings,
         ProactiveEngagementFindings
     )
@@ -1514,6 +1727,7 @@ def engagementFindingEdit(request, uuid):
             "pages/engagementFindingEdit.html",
             {
                 'finding': finding,
+                'previewURL': f'/engagements/fgroup/finding/preview/{finding.id}'
             }
         )
 

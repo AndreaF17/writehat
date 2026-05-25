@@ -15,9 +15,9 @@ from writehat.lib.customer import Customer
 from writehat.lib.pageTemplate import PageTemplate
 from writehat.lib.report import Report, SavedReport
 from writehat.lib.findingCategory import DatabaseFindingCategory
-from writehat.lib.findingGroup import CVSSFindingGroup, DREADFindingGroup, BaseFindingGroup, ProactiveFindingGroup
-from writehat.lib.engagementFinding import CVSSEngagementFinding, DREADEngagementFinding, ProactiveEngagementFinding
-from writehat.lib.finding import CVSSDatabaseFinding,DREADFinding,DREADDatabaseFinding, ProactiveDatabaseFinding, ProactiveFinding
+from writehat.lib.findingGroup import CVSSFindingGroup, CVSS4FindingGroup, DREADFindingGroup, BaseFindingGroup, ProactiveFindingGroup
+from writehat.lib.engagementFinding import CVSSEngagementFinding, CVSS4EngagementFinding, DREADEngagementFinding, ProactiveEngagementFinding
+from writehat.lib.finding import CVSSDatabaseFinding, CVSS4DatabaseFinding, DREADFinding, DREADDatabaseFinding, ProactiveDatabaseFinding, ProactiveFinding
 
 MONGO_CONFIG = settings.MONGO_CONFIG
 log = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ def dbImport(fileobject):
 
     log.debug("dbImport valid .zip file detected")
     # Ensure exactly the right filenames are in the file
-    expectedFiles = ['components.json',
+    requiredFiles = ['components.json',
     'CVSSEngagementFinding.json',
     'DREADEngagementFinding.json',
     'ProactiveEngagementFinding.json',
@@ -69,13 +69,40 @@ def dbImport(fileobject):
     'Customer.json',
     'ImageModel.json']
 
+    allExpectedFiles = [
+        'components.json',
+        'CVSSEngagementFinding.json',
+        'CVSS4EngagementFinding.json',
+        'DREADEngagementFinding.json',
+        'ProactiveEngagementFinding.json',
+        'DREADFindingGroup.json',
+        'CVSSFindingGroup.json',
+        'CVSS4FindingGroup.json',
+        'ProactiveFindingGroup.json',
+        'BaseFindingGroup.json',
+        'Engagement.json',
+        'Report.json',
+        'SavedReport.json',
+        'PageTemplate.json',
+        'CVSSDatabaseFinding.json',
+        'CVSS4DatabaseFinding.json',
+        'DREADDatabaseFinding.json',
+        'ProactiveDatabaseFinding.json',
+        'DatabaseFindingCategory.json',
+        'DREADFinding.json',
+        'ProactiveFinding.json',
+        'Revision.json',
+        'Customer.json',
+        'ImageModel.json',
+    ]
+
     zipFileSet = []
     for filename in zip_file.namelist():
         if filename.endswith('.json'):
             zipFileSet.append(filename)
 
-    if (set(expectedFiles) != set(zipFileSet)):
-        print(expectedFiles)
+    if (not set(requiredFiles).issubset(set(zipFileSet))) or (not set(zipFileSet).issubset(set(allExpectedFiles))):
+        print(allExpectedFiles)
         print(zip_file.namelist())
         log.debug("dbImport infiles dont match, aborting")
         resultCode = 2
@@ -113,10 +140,12 @@ def dbImport(fileobject):
     # Wipe ORM Database (YIKES)
     log.debug("dbImport Wiping ORM database")
     CVSSEngagementFinding.objects.all().delete()
+    CVSS4EngagementFinding.objects.all().delete()
     DREADEngagementFinding.objects.all().delete()
     ProactiveEngagementFinding.objects.all().delete()
     DREADFindingGroup.objects.all().delete()
     CVSSFindingGroup.objects.all().delete()
+    CVSS4FindingGroup.objects.all().delete()
     ProactiveFindingGroup.objects.all().delete()
     BaseFindingGroup.objects.all().delete()
     Engagement.objects.all().delete()
@@ -124,6 +153,7 @@ def dbImport(fileobject):
     SavedReport.objects.all().delete()
     PageTemplate.objects.all().delete()
     CVSSDatabaseFinding.objects.all().delete()
+    CVSS4DatabaseFinding.objects.all().delete()
     DREADDatabaseFinding.objects.all().delete()
     ProactiveDatabaseFinding.objects.all().delete()
     DatabaseFindingCategory.objects.all().delete()
@@ -136,8 +166,10 @@ def dbImport(fileobject):
 
     # Build ORM Database back up
     log.debug("dbImport Building ORM Database back up")
-    for modelJson in reversed(expectedFiles):
+    for modelJson in reversed(allExpectedFiles):
         if modelJson != 'components.json':
+            if modelJson not in ormDict:
+                continue
             log.debug(f"restoring ORM model ({modelJson})")
             for element in serializers.deserialize("json", ormDict[modelJson]):
                 element.save()

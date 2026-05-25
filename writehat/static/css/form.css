@@ -111,6 +111,33 @@ table.writehat-form input[type="checkbox"] {
   max-width: 50vw;
 }
 
+#leftPane #findingForm {
+  width: 100%;
+}
+
+#leftPane #findingForm table.writehat-form {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+#leftPane #findingForm table.writehat-form tr th {
+  width: 12rem;
+}
+
+#leftPane #findingForm table.writehat-form tr td {
+  min-width: 0;
+}
+
+#leftPane #findingForm table.writehat-form tr td input[type="text"],
+#leftPane #findingForm tr:first-child input,
+#leftPane #findingForm table.writehat-form .CodeMirror:not(.CodeMirror-fullscreen),
+#leftPane #findingForm table.writehat-form .editor-toolbar,
+#leftPane #findingForm table.writehat-form .editor-statusbar,
+#leftPane #findingForm table.writehat-form .btn-group {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
 table.writehat-form .imageSelect {
   width: 90%;
   cursor: pointer;

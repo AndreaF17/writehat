@@ -2,6 +2,23 @@
 
 {% block title %}Edit Finding{% endblock %}
 
+{% block css %}
+  <style>
+    #writehat-content .paneContent {
+      overflow: hidden;
+    }
+
+    #writehat-content .paneContent > .pane {
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    #rightPane {
+      overflow-y: hidden !important;
+    }
+  </style>
+{% endblock %}
+
 {% block headerLeft %}
   {% include 'snippets/breadcrumbs.html' with current=finding %}
 {% endblock %}
@@ -13,13 +30,17 @@
   {% include 'snippets/textButton.html' with name='Delete' id='findingDelete' type='times' class='btn-danger' %}
 {% endblock %}
 
-{% block fullPane %}
+{% block leftPane %}
   {% include 'panes/findingEdit.html' %}
+{% endblock %}
+
+{% block rightPane %}
+  {% include 'panes/findingPreview.html' %}
 {% endblock %}
 
 {% block footer %}
   <!-- Hidden finding div for storing Finding Name, UUID, etc. -->
-  <span id="finding-info" finding-name="{{ finding.name }}" finding-id="{{ finding.id }}" category-id="{{ finding.categoryID }}" style="display: none;"></span>
+  <span id="finding-info" finding-name="{{ finding.name }}" finding-id="{{ finding.id }}" finding-preview-url="{{ previewURL }}" category-id="{{ finding.categoryID }}" style="display: none;"></span>
   <span id="timestamp-check" object-id="{{ finding.id }}" hint="database finding" button="findingSave"></span>
   <script src='/static/js/findingEdit.js'></script>
   <script src='/static/js/findingsBrowse.js'></script>

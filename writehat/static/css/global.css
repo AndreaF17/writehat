@@ -73,6 +73,14 @@ div::-webkit-scrollbar-thumb,iframe::-webkit-scrollbar-thumb
   overflow-y: scroll;
 }
 
+#writehat-content .paneContent > .pane {
+  min-width: 0;
+}
+
+#leftPane {
+  overflow-x: hidden;
+}
+
 .writehat-header .header-right {
   display: flex;
   max-height: 6rem;
@@ -307,6 +315,26 @@ select:hover {
     border: none;
     width: max(1000px, 50vw);
     flex: 1;
+}
+
+#findingPreview {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#writehat-content .paneContent #findingPreview.card-body {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+#findingPreview > #finding-preview-frame {
+  border: none;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
 }
 
 a.nav-button {

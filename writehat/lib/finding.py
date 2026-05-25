@@ -2,6 +2,7 @@ import logging
 from django.db import models
 from writehat.models import *
 from writehat.lib.cvss import *
+from writehat.lib.cvss4 import *
 from writehat.lib.dread import *
 from writehat.lib.errors import *
 from writehat.lib.figure import *
@@ -13,6 +14,23 @@ from writehat.lib.revision import Revision
 
 log = logging.getLogger(__name__)
 todo_re = r"\{\s{0,2}[Tt][Oo][Dd][Oo](?P<todo_note>[|][^}]+)?\s{0,2}\}"
+
+
+class CVSS4LegacyAdapter:
+
+    def __init__(self, cvss4_data):
+
+        self._cvss4_data = cvss4_data
+
+    @property
+    def dict(self):
+
+        return self._cvss4_data.legacy_dict
+
+    @property
+    def vector(self):
+
+        return self._cvss4_data.vector
 
 class BaseDatabaseFinding(WriteHatBaseModel):
 
@@ -75,16 +93,17 @@ class BaseDatabaseFinding(WriteHatBaseModel):
     def get_child(cls, id):
 
         finding = None
-        try:
-            finding = CVSSDatabaseFinding.objects.get(id=id) 
-        except CVSSDatabaseFinding.DoesNotExist:
+        for findingClass in [
+            CVSSDatabaseFinding,
+            CVSS4DatabaseFinding,
+            DREADDatabaseFinding,
+            ProactiveDatabaseFinding,
+        ]:
             try:
-                finding = DREADDatabaseFinding.objects.get(id=id)
-            except DREADDatabaseFinding.DoesNotExist:
-                try:
-                    finding = ProactiveDatabaseFinding.objects.get(id=id)
-                except ProactiveDatabaseFinding.DoesNotExist:
-                    pass
+                finding = findingClass.objects.get(id=id)
+                break
+            except findingClass.DoesNotExist:
+                continue
 
         if finding is None:
             raise FindingError(f"DatabaseFinding UUID {str(id)} does not exist")
@@ -102,6 +121,7 @@ class BaseDatabaseFinding(WriteHatBaseModel):
 
         for findingClass in [
             CVSSDatabaseFinding,
+            CVSS4DatabaseFinding,
             DREADDatabaseFinding,
             ProactiveDatabaseFinding
         ]:
@@ -117,6 +137,8 @@ class BaseDatabaseFinding(WriteHatBaseModel):
 
         if scoringType in [None, 'CVSS']:
             findings += list(CVSSDatabaseFinding.objects.all())
+        if scoringType in [None, 'CVSS4']:
+            findings += list(CVSS4DatabaseFinding.objects.all())
         if scoringType in [None, 'DREAD']:
             findings += list(DREADDatabaseFinding.objects.all())
         if scoringType in [None, 'PROACTIVE']:
@@ -311,6 +333,57 @@ class CVSSFinding(BaseDatabaseFinding):
         return formData
 
 
+class CVSS4Finding(BaseDatabaseFinding):
+
+    formClass = CVSS4EngagementFindingForm
+    scoringType = models.CharField(default='CVSS4', editable=False, max_length=50)
+    toolsUsed = MarkdownField(max_length=30000, null=True, blank=True)
+    vector = models.CharField(max_length=500, null=True, blank=True)
+    htmlTemplate = 'componentTemplates/CVSSFinding.html'
+    abridgedTemplate = 'componentTemplates/CVSSFindingShort.html'
+    summaryTemplate = 'componentTemplates/FindingsSummary.html'
+
+    class Meta:
+        abstract = True
+
+    @property
+    def score(self):
+
+        log.debug(f'CVSS4 score called with vector string: ({self.vector})')
+        return self.cvss4.score
+
+    @property
+    def severity(self):
+
+        return self.cvss4.severity
+
+    @property
+    def cvss4(self):
+
+        return CVSS4(self.vector)
+
+    @property
+    def cvss(self):
+
+        return CVSS4LegacyAdapter(self.cvss4)
+
+    def _formToModel(self, form):
+
+        formData = super()._formToModel(form)
+        formData.update({
+            'vector': CVSS4.createVector(formData)
+        })
+
+        return formData
+
+    def _modelToForm(self):
+
+        formData = super()._modelToForm()
+        formData.pop('vector')
+        formData.update(self.cvss4.dict)
+        return formData
+
+
 
 class ProactiveFinding(BaseDatabaseFinding):
 
@@ -354,6 +427,11 @@ class DatabaseOnlyFinding:
 class CVSSDatabaseFinding(DatabaseOnlyFinding,CVSSFinding):
 
     formClass = CVSSForm
+
+
+class CVSS4DatabaseFinding(DatabaseOnlyFinding, CVSS4Finding):
+
+    formClass = CVSS4Form
 
 
 class DREADDatabaseFinding(DatabaseOnlyFinding,DREADFinding):

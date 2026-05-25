@@ -315,6 +315,234 @@ class CVSSForm(FindingForm):
         required=True, initial='X')
 
 
+class CVSS4Form(FindingForm):
+
+    scoringType = 'CVSS4'
+
+    toolsUsed = forms.CharField(
+        label='Tools Used',
+        widget=forms.Textarea(),
+        max_length=30000,
+        required=False)
+    field_order = ['name', 'categoryID']
+    proofOfConcept = forms.CharField(
+        label='Proof of Concept',
+        widget=forms.Textarea(attrs={'class': 'finding-database-exclude'}),
+        max_length=30000,
+        required=False)
+
+    choicesAV = (
+        ('N', ('Network')),
+        ('A', ('Adjacent')),
+        ('L', ('Local')),
+        ('P', ('Physical')),
+    )
+
+    choicesAC = (
+        ('L', ('Low')),
+        ('H', ('High')),
+    )
+
+    choicesAT = (
+        ('N', ('None')),
+        ('P', ('Present')),
+    )
+
+    choicesPR = (
+        ('N', ('None')),
+        ('L', ('Low')),
+        ('H', ('High')),
+    )
+
+    choicesUI = (
+        ('N', ('None')),
+        ('P', ('Passive')),
+        ('A', ('Active')),
+    )
+
+    choicesHLN = (
+        ('H', ('High')),
+        ('L', ('Low')),
+        ('N', ('None')),
+    )
+
+    choicesSHLN = (
+        ('S', ('Safety')),
+        ('H', ('High')),
+        ('L', ('Low')),
+        ('N', ('None')),
+    )
+
+    choicesE = (
+        ('X', ('Not Defined')),
+        ('A', ('Attacked')),
+        ('P', ('Proof-of-Concept')),
+        ('U', ('Unreported')),
+    )
+
+    choicesXHML = (
+        ('X', ('Not Defined')),
+        ('H', ('High')),
+        ('M', ('Medium')),
+        ('L', ('Low')),
+    )
+
+    choicesXMAV = (
+        ('X', ('Not Defined')),
+        ('N', ('Network')),
+        ('A', ('Adjacent')),
+        ('L', ('Local')),
+        ('P', ('Physical')),
+    )
+
+    choicesXAC = (
+        ('X', ('Not Defined')),
+        ('L', ('Low')),
+        ('H', ('High')),
+    )
+
+    choicesXAT = (
+        ('X', ('Not Defined')),
+        ('N', ('None')),
+        ('P', ('Present')),
+    )
+
+    choicesXPR = (
+        ('X', ('Not Defined')),
+        ('N', ('None')),
+        ('L', ('Low')),
+        ('H', ('High')),
+    )
+
+    choicesXUI = (
+        ('X', ('Not Defined')),
+        ('N', ('None')),
+        ('P', ('Passive')),
+        ('A', ('Active')),
+    )
+
+    choicesXHLN = (
+        ('X', ('Not Defined')),
+        ('H', ('High')),
+        ('L', ('Low')),
+        ('N', ('None')),
+    )
+
+    choicesXSHLN = (
+        ('X', ('Not Defined')),
+        ('S', ('Safety')),
+        ('H', ('High')),
+        ('L', ('Low')),
+        ('N', ('None')),
+    )
+
+    cvss4AV = forms.ChoiceField(choices=choicesAV,
+        label='Attack Vector',
+        widget=TooltipBase(fieldName='AV', tooltipText=toolTipData['AV'], attrs={'class': 'custom-select'}),
+        required=False)
+    cvss4AC = forms.ChoiceField(choices=choicesAC,
+        label='Attack Complexity',
+        widget=TooltipBase(fieldName='AC', tooltipText=toolTipData['AC'], attrs={'class': 'custom-select'}),
+        required=False)
+    cvss4AT = forms.ChoiceField(choices=choicesAT,
+        label='Attack Requirements',
+        widget=TooltipBase(fieldName='AT', tooltipText=toolTipData['AT'], attrs={'class': 'custom-select'}),
+        required=False)
+    cvss4PR = forms.ChoiceField(choices=choicesPR,
+        label='Privileges Required',
+        widget=TooltipBase(fieldName='PR', tooltipText=toolTipData['PR'], attrs={'class': 'custom-select'}),
+        required=False)
+    cvss4UI = forms.ChoiceField(choices=choicesUI,
+        label='User Interaction',
+        widget=TooltipBase(fieldName='UI', tooltipText=toolTipData['UI'], attrs={'class': 'custom-select'}),
+        required=False)
+    cvss4VC = forms.ChoiceField(choices=choicesHLN,
+        label='Vulnerable Confidentiality',
+        widget=TooltipBase(fieldName='VC', tooltipText=toolTipData['VC'], attrs={'class': 'custom-select'}),
+        required=False)
+    cvss4VI = forms.ChoiceField(choices=choicesHLN,
+        label='Vulnerable Integrity',
+        widget=TooltipBase(fieldName='VI', tooltipText=toolTipData['VI'], attrs={'class': 'custom-select'}),
+        required=False)
+    cvss4VA = forms.ChoiceField(choices=choicesHLN,
+        label='Vulnerable Availability',
+        widget=TooltipBase(fieldName='VA', tooltipText=toolTipData['VA'], attrs={'class': 'custom-select'}),
+        required=False)
+    cvss4SC = forms.ChoiceField(choices=choicesHLN,
+        label='Subsequent Confidentiality',
+        widget=TooltipBase(fieldName='SC', tooltipText=toolTipData['SC'], attrs={'class': 'custom-select'}),
+        required=False)
+    cvss4SI = forms.ChoiceField(choices=choicesHLN,
+        label='Subsequent Integrity',
+        widget=TooltipBase(fieldName='SI', tooltipText=toolTipData['SI'], attrs={'class': 'custom-select'}),
+        required=False)
+    cvss4SA = forms.ChoiceField(choices=choicesHLN,
+        label='Subsequent Availability',
+        widget=TooltipBase(fieldName='SA', tooltipText=toolTipData['SA'], attrs={'class': 'custom-select'}),
+        required=False)
+
+    cvss4E = forms.ChoiceField(choices=choicesE,
+        label='Exploit Maturity',
+        widget=TooltipBase(fieldName='E', tooltipText=toolTipData['E'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4CR = forms.ChoiceField(choices=choicesXHML,
+        label='Confidentiality Requirement',
+        widget=TooltipBase(fieldName='CR', tooltipText=toolTipData['CR'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4IR = forms.ChoiceField(choices=choicesXHML,
+        label='Integrity Requirement',
+        widget=TooltipBase(fieldName='IR', tooltipText=toolTipData['IR'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4AR = forms.ChoiceField(choices=choicesXHML,
+        label='Availability Requirement',
+        widget=TooltipBase(fieldName='AR', tooltipText=toolTipData['AR'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4MAV = forms.ChoiceField(choices=choicesXMAV,
+        label='Modified Attack Vector',
+        widget=TooltipBase(fieldName='MAV', tooltipText=toolTipData['MAV'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4MAC = forms.ChoiceField(choices=choicesXAC,
+        label='Modified Attack Complexity',
+        widget=TooltipBase(fieldName='MAC', tooltipText=toolTipData['MAC'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4MAT = forms.ChoiceField(choices=choicesXAT,
+        label='Modified Attack Requirements',
+        widget=TooltipBase(fieldName='MAT', tooltipText=toolTipData['MAT'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4MPR = forms.ChoiceField(choices=choicesXPR,
+        label='Modified Privileges Required',
+        widget=TooltipBase(fieldName='MPR', tooltipText=toolTipData['MPR'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4MUI = forms.ChoiceField(choices=choicesXUI,
+        label='Modified User Interaction',
+        widget=TooltipBase(fieldName='MUI', tooltipText=toolTipData['MUI'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4MVC = forms.ChoiceField(choices=choicesXHLN,
+        label='Modified Vulnerable Confidentiality',
+        widget=TooltipBase(fieldName='MVC', tooltipText=toolTipData['MVC'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4MVI = forms.ChoiceField(choices=choicesXHLN,
+        label='Modified Vulnerable Integrity',
+        widget=TooltipBase(fieldName='MVI', tooltipText=toolTipData['MVI'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4MVA = forms.ChoiceField(choices=choicesXHLN,
+        label='Modified Vulnerable Availability',
+        widget=TooltipBase(fieldName='MVA', tooltipText=toolTipData['MVA'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4MSC = forms.ChoiceField(choices=choicesXHLN,
+        label='Modified Subsequent Confidentiality',
+        widget=TooltipBase(fieldName='MSC', tooltipText=toolTipData['MSC'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4MSI = forms.ChoiceField(choices=choicesXSHLN,
+        label='Modified Subsequent Integrity',
+        widget=TooltipBase(fieldName='MSI', tooltipText=toolTipData['MSI'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+    cvss4MSA = forms.ChoiceField(choices=choicesXSHLN,
+        label='Modified Subsequent Availability',
+        widget=TooltipBase(fieldName='MSA', tooltipText=toolTipData['MSA'], attrs={'class': 'custom-select finding-advanced-choice'}),
+        required=True, initial='X')
+
+
 
 class CategoryAddForm(forms.Form):
 
@@ -344,6 +572,7 @@ class FindingImportForm(forms.Form):
 # Finding Group Types
 choicesFgroup = (
     ('CVSS', ('CVSS 3.1')),
+    ('CVSS4', ('CVSS 4.0')),
     ('DREAD', ('DREAD Framework')),
     ('PROACTIVE', ('Proactive / Positive')),
 )
@@ -423,6 +652,49 @@ class CVSSEngagementFindingForm(EngagementFindingForm,CVSSForm):
     field_order = ['name','findingGroup','categoryID','description','affectedResources','background','proofOfConcept','toolsUsed','remediation','references','cvssAV','cvssAC','cvssPR','cvssUI','cvssS','cvssC','cvssI','cvssA','cvssE','cvssRL','cvssRC','cvssCR','cvssIR','cvssAR','cvssMAV','cvssMAC','cvssMPR','cvssMUI','cvssMS','cvssMC','cvssMI','cvssMA',]
 
 
+class CVSS4EngagementFindingForm(EngagementFindingForm, CVSS4Form):
+
+    findingGroup = forms.UUIDField(label='Finding Group', required=True)
+    field_order = [
+        'name',
+        'findingGroup',
+        'categoryID',
+        'description',
+        'affectedResources',
+        'background',
+        'proofOfConcept',
+        'toolsUsed',
+        'remediation',
+        'references',
+        'cvss4AV',
+        'cvss4AC',
+        'cvss4AT',
+        'cvss4PR',
+        'cvss4UI',
+        'cvss4VC',
+        'cvss4VI',
+        'cvss4VA',
+        'cvss4SC',
+        'cvss4SI',
+        'cvss4SA',
+        'cvss4E',
+        'cvss4CR',
+        'cvss4IR',
+        'cvss4AR',
+        'cvss4MAV',
+        'cvss4MAC',
+        'cvss4MAT',
+        'cvss4MPR',
+        'cvss4MUI',
+        'cvss4MVC',
+        'cvss4MVI',
+        'cvss4MVA',
+        'cvss4MSC',
+        'cvss4MSI',
+        'cvss4MSA',
+    ]
+
+
 class DREADEngagementFindingForm(EngagementFindingForm,DREADForm):
 
     choicesStride = [ 
@@ -480,6 +752,10 @@ class ProactiveEngagementFindingForm(EngagementFindingForm,ProactiveForm):
 
 
 class CVSSDatabaseFindingForm(CVSSForm):
+    findingGroup = None
+
+
+class CVSS4DatabaseFindingForm(CVSS4Form):
     findingGroup = None
 
 class DREADDatabaseFindingForm(DREADForm):

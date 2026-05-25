@@ -36,6 +36,8 @@
   --dread-color: rgba(224, 0, 101, 1);
   /* cvss */
   --cvss-color: rgba(var(--orange-rgba), 1);
+  /* cvss4 */
+  --cvss4-color: var(--cvss-color);
   /* proactive */
   --proactive-color: rgba(var(--green-rgba), 1);
 
@@ -46,6 +48,10 @@
 
 .bg-cvss {
   background-color: var(--cvss-color);
+}
+
+.bg-cvss4 {
+  background-color: var(--cvss4-color);
 }
 
 .bg-dread {
@@ -86,6 +92,10 @@
   color: var(--cvss-color);
 }
 
+.fg-cvss4 {
+  color: var(--cvss4-color);
+}
+
 .fg-dread {
   color: var(--dread-color);
 }
@@ -101,6 +111,11 @@
   border-radius: .25rem;
 }
 
+.border-cvss4 {
+  border: 1px solid var(--cvss4-color);
+  border-radius: .25rem;
+}
+
 .border-dread {
   border: 1px solid var(--dread-color);
   border-radius: .25rem;
@@ -113,6 +128,10 @@
 
 .borderleft-cvss {
   border-left: .5em solid var(--cvss-color);
+}
+
+.borderleft-cvss4 {
+  border-left: .5em solid var(--cvss4-color);
 }
 
 .borderleft-dread {

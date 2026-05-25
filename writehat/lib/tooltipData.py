@@ -7,6 +7,12 @@ securityRequirements = [{'metric':'Not Defined (X)','text':'Assigning this value
                             {'metric':'Medium (M)','text':'Loss of [Confidentiality | Integrity | Availability] is likely to have a serious adverse effect on the organization or individuals associated with the organization (e.g., employees, customers).'},
                             {'metric':'Low (L)','text':'Loss of [Confidentiality | Integrity | Availability] is likely to have only a limited adverse effect on the organization or individuals associated with the organization (e.g., employees, customers).'}]
 
+
+cvss4ModifiedSIorSAMetrics = [
+                        {'metric':'Description','text':'These metrics let the analyst override Subsequent System Integrity and Availability values for CVSS v4.0 when environmental conditions differ from default assumptions.'},
+                        {'metric':'Values','text':'The same values as the corresponding Base Metric, plus Safety (S) and Not Defined (X).'}
+                    ]
+
 toolTipData = { 
     'AV': {'name':'Attack Vector (AV)','metrics':[
                                                     {'metric':'Network (N)','text':'The vulnerable component is bound to the network stack and the set of possible attackers extends beyond the other options listed below, up to and including the entire Internet. Such a vulnerability is often termed “remotely exploitable” and can be thought of as an attack being exploitable at the protocol level one or more network hops away (e.g., across one or more routers). An example of a network attack is an attacker causing a denial of service (DoS) by sending a specially crafted TCP packet across a wide area network (e.g., CVE‑2004‑0230).'},
@@ -27,6 +33,10 @@ toolTipData = {
                                                     {'metric':'None (N)','text':'The vulnerable system can be exploited without interaction from any user.'},
                                                     {'metric':'Required (R)','text':'Successful exploitation of this vulnerability requires a user to take some action before the vulnerability can be exploited. For example, a successful exploit may only be possible during the installation of an application by a system administrator.'}
                                                 ]},
+    'AT': {'name':'Attack Requirements (AT)','metrics':[
+                                                    {'metric':'None (N)','text':'The attack does not rely on additional deployment or runtime conditions beyond those captured by other base metrics.'},
+                                                    {'metric':'Present (P)','text':'The attack requires specific external conditions or assumptions to be true before exploitation is possible.'}
+                                                ]},
     'S': {'name':'Scope (S)','metrics':[
                                                     {'metric':'Unchanged (U)','text':'An exploited vulnerability can only affect resources managed by the same security authority. In this case, the vulnerable component and the impacted component are either the same, or both are managed by the same security authority.'},
                                                     {'metric':'Changed (C)','text':'An exploited vulnerability can affect resources beyond the security scope managed by the security authority of the vulnerable component. In this case, the vulnerable component and the impacted component are different and managed by different security authorities.'}
@@ -46,6 +56,38 @@ toolTipData = {
                                                     {'metric':'Low (L)','text':'Performance is reduced or there are interruptions in resource availability. Even if repeated exploitation of the vulnerability is possible, the attacker does not have the ability to completely deny service to legitimate users. The resources in the impacted component are either partially available all of the time, or fully available only some of the time, but overall there is no direct, serious consequence to the impacted component.'},
                                                     {'metric':'None (N)','text':'There is no impact to availability within the impacted component.'}    
                                             
+                                                ]},
+    'VC': {'name':'Vulnerable System Confidentiality (VC)','metrics':[
+                                                    {'metric':'High (H)','text':'Exploitation can cause severe confidentiality loss in the vulnerable system.'},
+                                                    {'metric':'Low (L)','text':'Exploitation can cause limited confidentiality loss in the vulnerable system.'},
+                                                    {'metric':'None (N)','text':'Exploitation does not affect confidentiality of the vulnerable system.'}
+                                                ]},
+    'VI': {'name':'Vulnerable System Integrity (VI)','metrics':[
+                                                    {'metric':'High (H)','text':'Exploitation can cause severe integrity loss in the vulnerable system.'},
+                                                    {'metric':'Low (L)','text':'Exploitation can cause limited integrity loss in the vulnerable system.'},
+                                                    {'metric':'None (N)','text':'Exploitation does not affect integrity of the vulnerable system.'}
+                                                ]},
+    'VA': {'name':'Vulnerable System Availability (VA)','metrics':[
+                                                    {'metric':'High (H)','text':'Exploitation can cause severe availability loss in the vulnerable system.'},
+                                                    {'metric':'Low (L)','text':'Exploitation can cause limited availability loss in the vulnerable system.'},
+                                                    {'metric':'None (N)','text':'Exploitation does not affect availability of the vulnerable system.'}
+                                                ]},
+    'SC': {'name':'Subsequent System Confidentiality (SC)','metrics':[
+                                                    {'metric':'High (H)','text':'Exploitation can cause severe confidentiality loss in downstream or subsequently impacted systems.'},
+                                                    {'metric':'Low (L)','text':'Exploitation can cause limited confidentiality loss in downstream or subsequently impacted systems.'},
+                                                    {'metric':'None (N)','text':'Exploitation does not affect confidentiality of downstream or subsequently impacted systems.'}
+                                                ]},
+    'SI': {'name':'Subsequent System Integrity (SI)','metrics':[
+                                                    {'metric':'Safety (S)','text':'Exploitation can have safety-related impacts in subsequent systems.'},
+                                                    {'metric':'High (H)','text':'Exploitation can cause severe integrity loss in subsequent systems.'},
+                                                    {'metric':'Low (L)','text':'Exploitation can cause limited integrity loss in subsequent systems.'},
+                                                    {'metric':'None (N)','text':'Exploitation does not affect integrity of subsequent systems.'}
+                                                ]},
+    'SA': {'name':'Subsequent System Availability (SA)','metrics':[
+                                                    {'metric':'Safety (S)','text':'Exploitation can have safety-related impacts on availability or safe operation of subsequent systems.'},
+                                                    {'metric':'High (H)','text':'Exploitation can cause severe availability loss in subsequent systems.'},
+                                                    {'metric':'Low (L)','text':'Exploitation can cause limited availability loss in subsequent systems.'},
+                                                    {'metric':'None (N)','text':'Exploitation does not affect availability of subsequent systems.'}
                                                 ]},
     'E': {'name':'Exploit Code Maturity  (E)','metrics':[
                                                     {'metric':'Not Defined (X)','text':'Assigning this value indicates there is insufficient information to choose one of the other values, and has no impact on the overall Temporal Score, i.e., it has the same effect on scoring as assigning High.'},
@@ -73,12 +115,19 @@ toolTipData = {
 
     'MAV': {'name':'Modified Attack Vector (MAV)','metrics': modifiedBaseMetrics},
     'MAC': {'name':'Modified Attack Complexity (MAC)','metrics': modifiedBaseMetrics},
+    'MAT': {'name':'Modified Attack Requirements (MAT)','metrics': modifiedBaseMetrics},
     'MPR': {'name':'Modified Privileges Required (MPR)','metrics': modifiedBaseMetrics},
     'MUI': {'name':'Modified User Interaction (MUI)','metrics': modifiedBaseMetrics},
     'MS': {'name':'Modified Scope (MS)','metrics': modifiedBaseMetrics},
     'MC': {'name':'Modified Confidentiality (MC)','metrics': modifiedBaseMetrics},
     'MI': {'name':'Modified Integrity (MI)','metrics': modifiedBaseMetrics},
     'MA': {'name':'Modified Availability (MA)','metrics': modifiedBaseMetrics},
+    'MVC': {'name':'Modified Vulnerable System Confidentiality (MVC)','metrics': modifiedBaseMetrics},
+    'MVI': {'name':'Modified Vulnerable System Integrity (MVI)','metrics': modifiedBaseMetrics},
+    'MVA': {'name':'Modified Vulnerable System Availability (MVA)','metrics': modifiedBaseMetrics},
+    'MSC': {'name':'Modified Subsequent System Confidentiality (MSC)','metrics': modifiedBaseMetrics},
+    'MSI': {'name':'Modified Subsequent System Integrity (MSI)','metrics': cvss4ModifiedSIorSAMetrics},
+    'MSA': {'name':'Modified Subsequent System Availability (MSA)','metrics': cvss4ModifiedSIorSAMetrics},
 
 
     # These definitions are not official in any way and could (should?) be updated with something better

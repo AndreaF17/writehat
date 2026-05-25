@@ -5,6 +5,7 @@ import logging
 import importlib
 import markdown as md
 from writehat.lib.cvss import *
+from writehat.lib.cvss4 import *
 from writehat.lib.dread import *
 from markdown.extensions.codehilite import CodeHiliteExtension
 from django.template.loader import render_to_string
@@ -249,9 +250,18 @@ def user_template_replace(markdown_text, context):
 
     # variables for user_context dict
 
-    f,c,d,p,fg = "findings", "cvss", "dread", "proactive", "group"
+    f,c,c4,d,p,fg = "findings", "cvss", "cvss4", "dread", "proactive", "group"
     
     cvss = {
+            "informational":0,
+            "low": 0,
+            "medium":0,
+            "high":0,
+            "critical":0,
+            "total":0
+            }
+
+    cvss4 = {
             "informational":0,
             "low": 0,
             "medium":0,
@@ -300,6 +310,25 @@ def user_template_replace(markdown_text, context):
                     else:
                         cvss['critical']+=1
                         critical+=1
+                elif finding.scoringType == "CVSS4":
+                    cvss4['total']+=1
+                    total+=1
+                    res = CVSS4(finding.vector)
+                    if res.severity == "Informational":
+                        cvss4['informational']+=1
+                        informational+=1
+                    elif res.severity == "Low":
+                        cvss4['low']+=1
+                        low+=1
+                    elif res.severity == "Medium":
+                        cvss4['medium']+=1
+                        medium+=1
+                    elif res.severity == "High":
+                        cvss4['high']+=1
+                        high+=1
+                    else:
+                        cvss4['critical']+=1
+                        critical+=1
                 elif finding.scoringType == "DREAD":
                     dread['total']+=1
                     total+=1
@@ -333,11 +362,11 @@ def user_template_replace(markdown_text, context):
         fg_id+=1
 
     # total per severity 
-    user_context[f'{f}informationalcount'] = cvss['informational'] + dread['informational']
-    user_context[f'{f}lowcount'] = cvss['low'] + dread['low']
-    user_context[f'{f}mediumcount'] = cvss['medium'] + dread['medium']
-    user_context[f'{f}highcount'] = cvss['high'] + dread['high']
-    user_context[f'{f}criticalcount'] = cvss['critical'] + dread['critical']
+    user_context[f'{f}informationalcount'] = cvss['informational'] + cvss4['informational'] + dread['informational']
+    user_context[f'{f}lowcount'] = cvss['low'] + cvss4['low'] + dread['low']
+    user_context[f'{f}mediumcount'] = cvss['medium'] + cvss4['medium'] + dread['medium']
+    user_context[f'{f}highcount'] = cvss['high'] + cvss4['high'] + dread['high']
+    user_context[f'{f}criticalcount'] = cvss['critical'] + cvss4['critical'] + dread['critical']
     user_context[f'{f}totalcount'] = (user_context[f'{f}informationalcount'] + 
                                          user_context[f'{f}lowcount'] + 
                                          user_context[f'{f}mediumcount'] + 
@@ -351,6 +380,14 @@ def user_template_replace(markdown_text, context):
     user_context[f'{f}{c}mediumcount'] = cvss['medium']
     user_context[f'{f}{c}highcount'] = cvss['high']
     user_context[f'{f}{c}criticalcount'] = cvss['critical']
+
+    # cvss4
+    user_context[f'{f}{c4}totalcount'] = cvss4['total']
+    user_context[f'{f}{c4}informationalcount'] = cvss4['informational']
+    user_context[f'{f}{c4}lowcount'] = cvss4['low']
+    user_context[f'{f}{c4}mediumcount'] = cvss4['medium']
+    user_context[f'{f}{c4}highcount'] = cvss4['high']
+    user_context[f'{f}{c4}criticalcount'] = cvss4['critical']
 
     # dread
     user_context[f'{f}{d}totalcount'] = dread['total']

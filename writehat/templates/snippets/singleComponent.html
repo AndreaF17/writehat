@@ -9,7 +9,11 @@
     <div class="componentEditControls">
       <span class="assignee">{{ component.json.assignee_name }}</span>
       <button class='reviewStatus' reportID='{{ report.id }}' componentID='{{ component.id }}' value='{{ component.reviewStatus }}' title='Review status: {{ component.reviewStatusValue }}'>&nbsp;</button>
-      {% include 'snippets/smallButton.html' with name='Edit Component' type='pen' class='componentEdit text-dark' attrs='componentID='|addstr:component.id %}
+      {% if report.className == 'Report' and not component.json.editable %}
+        <span class="text-warning mr-2" title="Locked by template import"><i class="fas fa-lock"></i></span>
+      {% else %}
+        {% include 'snippets/smallButton.html' with name='Edit Component' type='pen' class='componentEdit text-dark' attrs='componentID='|addstr:component.id %}
+      {% endif %}
       {% include 'snippets/smallButton.html' with name='Duplicate Component' type='copy' class='componentDuplicate text-dark' attrs='componentID='|addstr:component.id %}
       {% include 'snippets/smallButton.html' with name='Delete Component' type='times-circle' class='componentDelete text-danger' attrs='componentID='|addstr:component.id %}
     </div>

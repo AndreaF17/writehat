@@ -209,11 +209,101 @@ function searchFindings() {
 }
 
 
+function refreshCWESyncStatus() {
+  var statusLabel = $('#cweSyncStatus');
+  if (!statusLabel.length) {
+    return;
+  }
+
+  $.ajax({
+    url: '/findings/category/import/cwe/status',
+    type: 'GET',
+    success: function(data) {
+      if (!data.lastSynced) {
+        statusLabel.text('CWE last sync: never');
+        return;
+      }
+
+      var syncDate = new Date(data.lastSynced);
+      var syncText = syncDate.toLocaleString();
+      statusLabel.text(`CWE last sync: ${syncText} (${data.entries} entries)`);
+    },
+    error: function() {
+      statusLabel.text('CWE last sync: unavailable');
+    }
+  });
+}
+
+
 $(document).ready(function() {
 
   $('.categoryAddButton').off().click(function() {
     $('#categoryAdd-modal').modal('show');
   })
+
+  $("#categoryImportCWERemote")
+    .off()
+    .click(function () {
+      $.ajax({
+        url: "/findings/category/import/cwe/remote",
+        type: "POST",
+        success: function (data) {
+          refreshCategories();
+          refreshCWESyncStatus();
+          success(
+            `CWE sync complete: created ${data.created}, skipped ${data.skipped}, invalid ${data.invalid}.`,
+          );
+        },
+        error: function (xhr) {
+          error("CWE sync failed: " + (xhr.responseText || "unknown error"));
+        },
+      });
+    });
+
+  $("#categoryImportCWE")
+    .off()
+    .click(function () {
+      var input = $(
+        '<input type="file" accept=".xml,.zip" style="display:none">',
+      );
+      $("body").append(input);
+
+      input.on("change", function () {
+        var file = this.files[0];
+        if (!file) {
+          input.remove();
+          return;
+        }
+
+        var formData = new FormData();
+        formData.append("file", file);
+
+        $.ajax({
+          url: "/findings/category/import/cwe",
+          type: "POST",
+          data: formData,
+          processData: false,
+          contentType: false,
+          success: function (data) {
+            refreshCategories();
+            refreshCWESyncStatus();
+            success(
+              `CWE import complete: created ${data.created}, skipped ${data.skipped}, invalid ${data.invalid}.`,
+            );
+          },
+          error: function (xhr) {
+            error(
+              "CWE import failed: " + (xhr.responseText || "unknown error"),
+            );
+          },
+          complete: function () {
+            input.remove();
+          },
+        });
+      });
+
+      input.click();
+    });
 
   loadModal('categoryAdd');
 
@@ -226,4 +316,6 @@ $(document).ready(function() {
     // client-side search feature
     $('#searchFindings').keyup(searchFindings);
   }
+
+  refreshCWESyncStatus();
 })

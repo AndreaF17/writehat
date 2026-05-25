@@ -35,6 +35,33 @@ DEBUG = writehat_config['writehat']['debug']
 ALLOWED_HOSTS = writehat_config['writehat']['allowed_hosts']
 CSRF_TRUSTED_ORIGINS = ALLOWED_HOSTS
 
+# Optional SSO (OIDC) configuration
+SSO_CONFIG = writehat_config.get('sso', {})
+SSO_ENABLED = bool(SSO_CONFIG.get('enabled', False))
+SSO_AUTO_REDIRECT = bool(SSO_CONFIG.get('auto_redirect', False))
+SSO_DISPLAY_NAME = str(SSO_CONFIG.get('display_name', 'Single Sign-On'))
+SSO_ALLOWED_EMAIL_DOMAINS = [str(d).lower() for d in SSO_CONFIG.get('allowed_email_domains', []) if str(d).strip()]
+SSO_REQUIRE_VERIFIED_EMAIL = bool(SSO_CONFIG.get('require_verified_email', True))
+
+if SSO_ENABLED:
+    OIDC_RP_CLIENT_ID = SSO_CONFIG.get('client_id', '')
+    OIDC_RP_CLIENT_SECRET = SSO_CONFIG.get('client_secret', '')
+    OIDC_OP_AUTHORIZATION_ENDPOINT = SSO_CONFIG.get('authorization_endpoint', '')
+    OIDC_OP_TOKEN_ENDPOINT = SSO_CONFIG.get('token_endpoint', '')
+    OIDC_OP_USER_ENDPOINT = SSO_CONFIG.get('userinfo_endpoint', '')
+    OIDC_OP_JWKS_ENDPOINT = SSO_CONFIG.get('jwks_endpoint', '')
+    OIDC_OP_LOGOUT_ENDPOINT = SSO_CONFIG.get('logout_endpoint', '')
+    OIDC_RP_SIGN_ALGO = SSO_CONFIG.get('sign_algo', 'RS256')
+    OIDC_VERIFY_SSL = bool(SSO_CONFIG.get('verify_ssl', True))
+    OIDC_STORE_ACCESS_TOKEN = True
+    OIDC_STORE_ID_TOKEN = True
+    OIDC_CREATE_USER = True
+
+    oidc_scopes = SSO_CONFIG.get('scopes', ['openid', 'email', 'profile'])
+    if isinstance(oidc_scopes, str):
+        oidc_scopes = oidc_scopes.split()
+    OIDC_RP_SCOPES = list(oidc_scopes)
+
 
 # LDAP CONFIGURATION
 LDAP_AUTH_URL = writehat_config['ldap']['url']
@@ -85,6 +112,8 @@ LDAP_AUTH_CONNECT_TIMEOUT = None
 LDAP_AUTH_RECEIVE_TIMEOUT = None
 
 LOGIN_REQUIRED_IGNORE_PATHS = ["/adminlogin/"]
+if SSO_ENABLED:
+    LOGIN_REQUIRED_IGNORE_PATHS.append('/oidc/')
 
 # Application definition
 
@@ -98,7 +127,16 @@ INSTALLED_APPS = [
     'django_python3_ldap'
 ]
 
-AUTHENTICATION_BACKENDS =('django.contrib.auth.backends.ModelBackend', 'django_python3_ldap.auth.LDAPBackend')
+if SSO_ENABLED:
+    INSTALLED_APPS.append('mozilla_django_oidc')
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'django_python3_ldap.auth.LDAPBackend',
+]
+
+if SSO_ENABLED:
+    AUTHENTICATION_BACKENDS.insert(0, 'writehat.lib.oidc.WriteHatOIDCAuthenticationBackend')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -114,10 +152,13 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'writehat.urls'
 
+CUSTOM_TEMPLATE_DIRS = getCustomTemplateDirs()
+CUSTOM_STATIC_DIRS = getCustomStaticDirs()
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': CUSTOM_TEMPLATE_DIRS,
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -125,6 +166,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'writehat.lib.context.writehat_ui',
             ],
         },
     },
@@ -208,6 +250,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 STATIC_URL = '/static/'
 STATIC_ROOT = 'writehat/static'
+STATICFILES_DIRS = CUSTOM_STATIC_DIRS
 
 LOGGING = {
     'version': 1,

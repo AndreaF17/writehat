@@ -4,7 +4,12 @@ from writehat.models import *
 from writehat.lib.finding import *
 from writehat.validation import isValidJSONList
 from django.core.exceptions import ValidationError
-from writehat.lib.findingForm import CVSSEngagementFindingForm, DREADEngagementFindingForm
+from writehat.lib.findingForm import (
+    CVSSEngagementFindingForm,
+    CVSS4EngagementFindingForm,
+    DREADEngagementFindingForm,
+    ProactiveEngagementFindingForm,
+)
 
 
 log = logging.getLogger(__name__)
@@ -44,6 +49,11 @@ class EngagementFinding():
             pass
 
         try:
+            finding = CVSS4EngagementFinding.objects.get(id=id)
+        except CVSS4EngagementFinding.DoesNotExist:
+            pass
+
+        try:
             finding = DREADEngagementFinding.objects.get(id=id)
         except DREADEngagementFinding.DoesNotExist:
             pass
@@ -70,6 +80,11 @@ class EngagementFinding():
         if databaseFinding.scoringType == 'CVSS':
             engagementFinding = databaseFinding.clone(
                 destinationClass=CVSSEngagementFinding,
+                name=databaseFinding.name
+            )
+        elif databaseFinding.scoringType == 'CVSS4':
+            engagementFinding = databaseFinding.clone(
+                destinationClass=CVSS4EngagementFinding,
                 name=databaseFinding.name
             )
         elif databaseFinding.scoringType == 'DREAD':
@@ -244,6 +259,24 @@ class CVSSEngagementFinding(EngagementFinding, CVSSFinding):
             # Importing here to prevent circular import
             from writehat.lib.findingGroup import CVSSFindingGroup
             self._fgroup_object = CVSSFindingGroup.objects.get(id=self.findingGroup)
+
+        return self._fgroup_object
+
+
+class CVSS4EngagementFinding(EngagementFinding, CVSS4Finding):
+
+    findingGroup = models.UUIDField(editable=False, null=True)
+    description = MarkdownField(max_length=30000, null=True, blank=True)
+    affectedResources = MarkdownField(max_length=30000, null=True, blank=True)
+    proofOfConcept = MarkdownField(max_length=30000, null=True, blank=True)
+    formClass = CVSS4EngagementFindingForm
+
+    @property
+    def fgroup(self):
+
+        if self._fgroup_object is None:
+            from writehat.lib.findingGroup import CVSS4FindingGroup
+            self._fgroup_object = CVSS4FindingGroup.objects.get(id=self.findingGroup)
 
         return self._fgroup_object
 
