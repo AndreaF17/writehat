@@ -1,16 +1,17 @@
 /* WRITEHAT TABLE */
 .writehat-table td {
-  padding: 0px;
-  padding-left: .3rem;
+    padding: .2rem .5rem;
+    vertical-align: middle;
 }
 .writehat-table th {
-  padding: .3rem;
+    padding: .55rem .6rem;
+    vertical-align: middle;
 }
 .writehat-table td > a {
     display: block;
     text-decoration: none;
     color: unset;
-    padding: .3rem;
+        padding: .5rem .6rem;
 }
 
 table.writehat-table.dataTable tbody tr {
@@ -50,13 +51,58 @@ table.writehat-table {
 /* Engagement reports action column: prevent icon stack from colliding on the right. */
 .writehat-reports td:last-child,
 .writehat-reports th:last-child {
-    min-width: 9.5rem;
+    min-width: 10.5rem;
 }
 
 .writehat-reports .report-actions {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: 0.1rem;
+    gap: 0.2rem;
     white-space: nowrap;
+}
+
+.writehat-table .table-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+}
+
+@media (max-width: 992px) {
+    .writehat-table {
+        font-size: 0.92rem;
+    }
+
+    .writehat-table th {
+        padding: .45rem .5rem;
+    }
+
+    .writehat-table td {
+        padding: .12rem .4rem;
+    }
+
+    .writehat-table td > a {
+        padding: .4rem .5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .writehat-reports {
+        min-width: 760px;
+    }
+
+    .writehat-reports td:last-child,
+    .writehat-reports th:last-child {
+        min-width: 11rem;
+    }
+
+    #groupListPane .writehat-table {
+        min-width: 800px;
+    }
+
+    .writehat-table .table-actions {
+        gap: 0.2rem;
+    }
 }

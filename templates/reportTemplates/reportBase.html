@@ -1,0 +1,38 @@
+{% load custom_tags %}
+<html>
+  <head>
+    {% include 'reportTemplates/reportDependencies.html' with report=report %}
+    <style>
+      :root {
+        --severity-informational-rgb: {{ severity_colors.Informational|default:"72, 147, 224" }};
+        --severity-low-rgb: {{ severity_colors.Low|default:"255, 200, 30" }};
+        --severity-medium-rgb: {{ severity_colors.Medium|default:"255, 112, 30" }};
+        --severity-high-rgb: {{ severity_colors.High|default:"255, 0, 0" }};
+        --severity-critical-rgb: {{ severity_colors.Critical|default:"166, 0, 255" }};
+        --severity-proactive-rgb: {{ severity_colors.Proactive|default:"54, 201, 94" }};
+      }
+    </style>
+    {% for css in component_css %}
+      <link href="/static/css/component/{{ css }}.css" rel="stylesheet">
+    {% endfor %}
+  </head>
+
+  <body>
+    <template id='report-body'>
+      {% if report.tlpDisplay %}
+        <span class="tlp-content {{ report.tlpCssClass }}">{{ report.tlpMarking }}</span>
+      {% endif %}
+      <div class="center header-content">
+        {% markdown header %}
+      </div>
+      <div class="center footer-content">
+        {% markdown footer %}
+      </div>
+      {% autoescape off %}
+        {% for component in components %}
+          {{ component }}
+        {% endfor %}
+      {% endautoescape %}
+    </template>
+  </body>
+</html>

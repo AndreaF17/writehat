@@ -1,0 +1,77 @@
+.homepage-content {
+  min-height: 9in;
+  display: flex;
+  flex-direction: column;
+}
+
+.homepage-image-wrap {
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.homepage-image {
+  max-height: 1.5in;
+  width: auto;
+  max-width: 75%;
+}
+
+.homepage-hero {
+  margin-top: 4.3in;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.homepage-title {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  padding-bottom: 0.35rem;
+}
+
+.homepage-subtitle {
+  margin-top: 1rem;
+  margin-bottom: 0;
+  font-size: 2.15rem;
+  font-weight: 500;
+}
+
+.homepage-text {
+  margin-top: 0;
+}
+
+.homepage-text-center {
+  text-align: center;
+}
+
+.homepage-team {
+  margin-top: auto;
+  margin-left: 0;
+  margin-bottom: -0.4rem;
+  text-align: right;
+  width: 100%;
+}
+
+.homepage-team-title {
+  margin-bottom: 0.5rem;
+}
+
+.homepage-team-list {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.homepage-team-row {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  unicode-bidi: plaintext;
+  line-height: 1.25;
+}
+
+.homepage-team-row:last-child {
+  margin-bottom: 0;
+}

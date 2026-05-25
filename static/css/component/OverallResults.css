@@ -1,0 +1,13 @@
+.overall-results-component .overall-results-body {
+  margin-top: 0.25rem;
+}
+
+.overall-results-component .overall-results-paragraph {
+  margin-top: 0.9rem;
+}
+
+.overall-results-component .overall-results-limitations-title {
+  margin-top: 1.2rem;
+  margin-bottom: 0.2rem;
+  font-weight: 600;
+}

@@ -1,0 +1,32 @@
+{% load custom_tags %}
+<section class="l{{ level }} component homepage-component{% if pageBreakBefore %} page-break{% endif %}" id="container_{{ id }}">
+  <div class="homepage-content">
+    {% if componentText %}
+      <div class="homepage-text{% if centerContent %} homepage-text-center{% endif %}">
+        {% markdown componentText %}
+      </div>
+    {% endif %}
+
+    <div class="homepage-hero">
+      {% if homepageTitle %}
+        <h1 class="homepage-title">{{ homepageTitle }}</h1>
+      {% endif %}
+
+      {% if homepageSubtitle %}
+        <h2 class="homepage-subtitle">{{ homepageSubtitle }}</h2>
+      {% endif %}
+    </div>
+
+    {% if teamRows %}
+      <div class="homepage-team">
+        <div class="homepage-team-list">
+          {% for row in teamRows %}
+            <p class="homepage-team-row">
+              <span class="homepage-team-name">{{ row.name }}</span>{% if row.name and row.role %} - {% endif %}<span class="homepage-team-role">{{ row.role }}</span>
+            </p>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</section>

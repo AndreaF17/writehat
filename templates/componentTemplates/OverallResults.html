@@ -1,0 +1,21 @@
+{% load custom_tags %}
+<section class="l{{ level }} component overall-results-component{% if pageBreakBefore %} page-break{% endif %}" id="container_{{ id }}">
+  {% include 'componentTemplates/Heading.html' %}
+
+  <div class="overall-results-body markdown-align-justify">
+    <p>
+      The overall security of {{ overallCustomerName }} is set to a {{ overallSecurityMarkup|safe }} criticality level.
+    </p>
+
+    <div class="overall-results-paragraph">
+      {% markdown resultText %}
+    </div>
+
+    {% if limitationText %}
+      <p class="overall-results-limitations-title">The following limitations affected the assessment activities:</p>
+      <div class="overall-results-paragraph">
+        {% markdown limitationText %}
+      </div>
+    {% endif %}
+  </div>
+</section>

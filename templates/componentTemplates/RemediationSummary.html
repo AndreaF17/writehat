@@ -1,0 +1,18 @@
+{% load custom_tags %}
+<section class="l{{ level }} component remediation-summary-component{% if pageBreakBefore %} page-break{% endif %}" id="container_{{ id }}">
+  {% include 'componentTemplates/Heading.html' %}
+
+  <div class="remediation-summary-body markdown-align-justify">
+    <p>
+      The vulnerabilities discovered during the penetration test can be fixed performing the following operations:
+    </p>
+
+    <div class="remediation-summary-paragraph">
+      {% markdown suggestedRemediation %}
+    </div>
+
+    <p class="remediation-summary-footer-note">
+      Check the remediation tab for each issue for more details about how to secure it.
+    </p>
+  </div>
+</section>

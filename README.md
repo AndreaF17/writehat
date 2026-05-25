@@ -15,18 +15,18 @@ It is **not** intended to be merged back into the original upstream project. Thi
 ## Quick Start
 
 1. Clone the repository.
-2. Edit [writehat/config/writehat.conf](writehat/config/writehat.conf) with secure passwords and environment values.
+2. Edit [config/writehat.conf](config/writehat.conf) with secure passwords and environment values.
 3. Start services:
 
 ```bash
 docker compose up -d --build
 ```
 
-1. Open the app through your configured nginx endpoint.
+1. Open the app at http://localhost.
 
 ## Core Runtime Configuration
 
-Main config file: [writehat/config/writehat.conf](writehat/config/writehat.conf)
+Main config file: [config/writehat.conf](config/writehat.conf)
 
 ### Base App
 
