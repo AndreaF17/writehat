@@ -22,7 +22,7 @@ It is **not** intended to be merged back into the original upstream project. Thi
 docker compose up -d --build
 ```
 
-4. Open the app through your configured nginx endpoint.
+1. Open the app through your configured nginx endpoint.
 
 ## Core Runtime Configuration
 
@@ -56,6 +56,17 @@ Important keys:
 - `scopes`
 - `allowed_email_domains`
 - `require_verified_email`
+- `role_claim_paths`
+- `staff_roles`
+- `superuser_roles`
+- `default_is_staff`
+- `default_is_superuser`
+- `sync_role_flags`
+- `staff_if_superuser`
+- `sync_groups`
+- `sync_groups_strict`
+- `group_claim_paths`
+- `role_to_group_map`
 
 When enabled:
 
@@ -122,12 +133,32 @@ Behavior:
 docker compose up -d --build writehat
 ```
 
-4. Test login via `/login` and `/login/sso`.
+1. Test login via `/login` and `/login/sso`.
 
 Security controls available:
 
 - Email verified requirement
 - Allowed email domain list
+
+Role management controls available:
+
+- Map IdP roles to Django `is_staff`
+- Map IdP roles to Django `is_superuser`
+- Keep Django role flags synced (or only elevate)
+- Optionally sync Django groups from IdP claims
+
+Example role mapping:
+
+```toml
+[sso]
+enabled = true
+staff_roles = ['writehat_staff', 'writehat_editor']
+superuser_roles = ['writehat_admin']
+sync_role_flags = true
+sync_groups = true
+group_claim_paths = ['groups']
+role_to_group_map = { writehat_admin = 'Admins', writehat_editor = 'Editors' }
+```
 
 ## Custom Component Workflow (Private Team Development)
 

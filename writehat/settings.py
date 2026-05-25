@@ -43,6 +43,29 @@ SSO_DISPLAY_NAME = str(SSO_CONFIG.get('display_name', 'Single Sign-On'))
 SSO_ALLOWED_EMAIL_DOMAINS = [str(d).lower() for d in SSO_CONFIG.get('allowed_email_domains', []) if str(d).strip()]
 SSO_REQUIRE_VERIFIED_EMAIL = bool(SSO_CONFIG.get('require_verified_email', True))
 
+SSO_ROLE_CLAIM_PATHS = SSO_CONFIG.get('role_claim_paths', ['roles', 'groups', 'realm_access.roles'])
+if type(SSO_ROLE_CLAIM_PATHS) != list:
+    SSO_ROLE_CLAIM_PATHS = [SSO_ROLE_CLAIM_PATHS]
+
+SSO_GROUP_CLAIM_PATHS = SSO_CONFIG.get('group_claim_paths', ['groups'])
+if type(SSO_GROUP_CLAIM_PATHS) != list:
+    SSO_GROUP_CLAIM_PATHS = [SSO_GROUP_CLAIM_PATHS]
+
+SSO_STAFF_ROLES = [str(role).lower() for role in SSO_CONFIG.get('staff_roles', []) if str(role).strip()]
+SSO_SUPERUSER_ROLES = [str(role).lower() for role in SSO_CONFIG.get('superuser_roles', []) if str(role).strip()]
+SSO_DEFAULT_IS_STAFF = bool(SSO_CONFIG.get('default_is_staff', False))
+SSO_DEFAULT_IS_SUPERUSER = bool(SSO_CONFIG.get('default_is_superuser', False))
+SSO_SYNC_ROLE_FLAGS = bool(SSO_CONFIG.get('sync_role_flags', True))
+SSO_STAFF_IF_SUPERUSER = bool(SSO_CONFIG.get('staff_if_superuser', True))
+
+SSO_SYNC_GROUPS = bool(SSO_CONFIG.get('sync_groups', False))
+SSO_SYNC_GROUPS_STRICT = bool(SSO_CONFIG.get('sync_groups_strict', False))
+SSO_ROLE_TO_GROUP_MAP = {
+    str(role).lower(): str(group)
+    for role, group in SSO_CONFIG.get('role_to_group_map', {}).items()
+    if str(group).strip()
+}
+
 if SSO_ENABLED:
     OIDC_RP_CLIENT_ID = SSO_CONFIG.get('client_id', '')
     OIDC_RP_CLIENT_SECRET = SSO_CONFIG.get('client_secret', '')
@@ -61,6 +84,11 @@ if SSO_ENABLED:
     if isinstance(oidc_scopes, str):
         oidc_scopes = oidc_scopes.split()
     OIDC_RP_SCOPES = list(oidc_scopes)
+
+    # Keycloak and similar providers often nest client-specific roles here.
+    client_role_path = f'resource_access.{OIDC_RP_CLIENT_ID}.roles'
+    if OIDC_RP_CLIENT_ID and client_role_path not in SSO_ROLE_CLAIM_PATHS:
+        SSO_ROLE_CLAIM_PATHS.append(client_role_path)
 
 
 # LDAP CONFIGURATION
