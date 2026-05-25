@@ -2,7 +2,6 @@ mongo/
 mysql/
 venv/
 **/__pycache__/**
-migrations
 logs.txt
 *.log
 *.env
@@ -29,7 +28,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -76,6 +74,12 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+
+# Keep migration source files in Git; ignore only generated cache artifacts.
+**/migrations/__pycache__/
+**/migrations/*.pyc
+**/migrations/*.pyo
+**/migrations/*.pyd
 
 # Flask stuff:
 instance/
