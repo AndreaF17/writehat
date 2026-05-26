@@ -1,6 +1,114 @@
 
 /*** MARKDOWN EDITOR ***/
 
+/*
+ * When the user pastes an image (e.g. from a screenshot tool) into the markdown
+ * editor, upload it immediately with size=100 and insert the figure marker
+ * `{<uuid>|100|<caption>}` at the cursor position. The crop/annotate/scale
+ * modal is intentionally bypassed; the user can change the size by editing
+ * the number directly in the markdown.
+ *
+ * Returns true if the paste event was handled (so the caller knows not to
+ * run any further paste handlers).
+ */
+function pasteImageInline(cm, e) {
+  var clipboardData = e.clipboardData || window.clipboardData;
+  if (!clipboardData || !clipboardData.items) {
+    return false;
+  }
+
+  for (var i = 0; i < clipboardData.items.length; i++) {
+    var item = clipboardData.items[i];
+    if (item.kind === 'file' && item.type.indexOf('image/') === 0) {
+      var blob = item.getAsFile();
+      if (!blob) {
+        continue;
+      }
+
+      // Prevent the default behaviour (which would paste the local file path
+      // or nothing at all, depending on the browser).
+      if (e.preventDefault) e.preventDefault();
+      if (e.codemirrorIgnore !== undefined) e.codemirrorIgnore = true;
+
+      var rawName = blob.name || 'pasted-image';
+      // Strip extension and any characters that would break the figure regex
+      // {<uuid>|<size>|<caption>} (i.e. `|`, `{`, `}`).
+      var caption = rawName
+        .replace(/\.[a-z0-9]+$/i, '')
+        .replace(/[|{}]/g, '')
+        .trim() || 'pasted-image';
+
+      var eventName = 'pastedImageInline_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+
+      // Listen once for the upload success of THIS specific paste.
+      $(document).one(eventName, function (ev, figureID, cap, size) {
+        var figureString = '\n\n{' + figureID + '|' + size + '|' + cap + '}\n\n';
+        cm.replaceSelection(figureString);
+      });
+
+      // Upload with size=100 (full width). The user can tweak the size later
+      // by editing the markdown string by hand.
+      uploadImage(blob, 100, caption, eventName);
+
+      // Only handle the first image in the clipboard payload.
+      return true;
+    }
+  }
+  return false;
+}
+
+
+/*
+ * When the user pastes a single http(s) URL, turn it into a markdown link.
+ *   - With text selected: wrap selection as `[selected text](url)`.
+ *   - Without selection: insert as `[url](url)` (always renders as a link).
+ *
+ * Returns true if the paste was handled.
+ */
+function pasteUrlAsLink(cm, e) {
+  var clipboardData = e.clipboardData || window.clipboardData;
+  if (!clipboardData) {
+    console.debug('[paste-url] no clipboardData on event');
+    return false;
+  }
+
+  var text = '';
+  try {
+    text = clipboardData.getData('text/plain') || clipboardData.getData('text') || '';
+  } catch (err) {
+    console.debug('[paste-url] getData failed', err);
+    return false;
+  }
+
+  if (!text) {
+    return false;
+  }
+  text = text.trim();
+
+  // Accept only well-formed http/https URLs without internal whitespace.
+  var urlRegex = /^https?:\/\/\S+$/i;
+  if (!urlRegex.test(text)) {
+    return false;
+  }
+
+  console.debug('[paste-url] handling URL paste:', text);
+
+  if (e.preventDefault) e.preventDefault();
+  if (e.codemirrorIgnore !== undefined) e.codemirrorIgnore = true;
+
+  var selection = cm.getSelection();
+
+  // Escape closing brackets/parens so the markdown link stays valid.
+  var safeUrl = text.replace(/\)/g, '%29');
+  var label = selection
+    ? selection.replace(/]/g, '\\]')
+    : text.replace(/]/g, '\\]');
+
+  cm.replaceSelection('[' + label + '](' + safeUrl + ')');
+  return true;
+}
+
+
 // markdown editor toolbar config
 var default_toolbar_icons = [
   'bold',
@@ -390,6 +498,16 @@ function loadMarkdown() {
 
       simplemde.codemirror.on("blur", (elem => checkTodoMarker(elem)));
       checkTodoMarker(simplemde.codemirror);
+
+      // Custom paste handlers:
+      //  - image -> upload immediately with size=100 and insert figure marker
+      //    {<uuid>|100|<caption>}. Bypasses the crop/annotate/scale modal.
+      //    Size can be tuned by editing the number in the markdown.
+      //  - http(s) URL with selected text -> wrap selection as [text](url).
+      simplemde.codemirror.on("paste", function (cm, e) {
+        if (pasteImageInline(cm, e)) return;
+        if (pasteUrlAsLink(cm, e)) return;
+      });
     })
   }
 
