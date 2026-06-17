@@ -390,3 +390,35 @@ class AssigneeUser(User):
 
     def __iter__(self):
         yield (self.id, str(self))
+
+
+class AISettings(models.Model):
+    '''
+    Runtime-editable settings for the optional AI assistant (singleton, id=1).
+    When `configured` is True these override the static settings.AI_* values
+    loaded from config/writehat.conf or the WRITEHAT_AI_* environment variables.
+    '''
+
+    id = models.AutoField(primary_key=True)
+    enabled = models.BooleanField(default=False)
+    base_url = models.CharField(max_length=500, blank=True, default='')
+    api_key = models.CharField(max_length=500, blank=True, default='')
+    model_name = models.CharField(max_length=200, blank=True, default='')
+    temperature = models.FloatField(default=0.2)
+    max_tokens = models.IntegerField(default=1200)
+    timeout = models.IntegerField(default=60)
+    verify_ssl = models.BooleanField(default=True)
+    system_prompt = models.TextField(blank=True, default='')
+    # True once an admin saves settings here; until then ai.py uses the static
+    # config from settings.py as the source of truth.
+    configured = models.BooleanField(default=False)
+
+    @classmethod
+    def load(cls):
+        '''Return the singleton settings row, creating it if needed.'''
+        obj, _created = cls.objects.get_or_create(id=1)
+        return obj
+
+    def save(self, *args, **kwargs):
+        self.id = 1
+        super().save(*args, **kwargs)

@@ -160,6 +160,8 @@ urlpatterns = [
 
 # Admin URLS
     path('admin-tools', views.admintoolsHome),
+    path('admin-tools/ai-settings', views.adminAISettings),
+    path('admin-tools/ai-settings/test', views.adminAISettingsTest),
     path('admin-tools/users/new', views.adminUserNew),
     path('admin-tools/users/<int:user_id>/edit', views.adminUserEdit),
     path('admin-tools/users/<int:user_id>/toggle-active', views.adminUserToggleActive),

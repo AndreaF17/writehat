@@ -1,0 +1,49 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}AI Settings{% endblock %}
+
+{% block css %}
+  <link href="/static/css/admin-tools.css" rel="stylesheet">
+{% endblock %}
+
+{% block headerLeft %}
+  <div style="padding-right: .3rem">
+    {% include 'snippets/textButton.html' with name='Back' href='/admin-tools' type='chevron-left' class='btn-secondary' %}
+  </div>
+  AI Settings
+{% endblock %}
+
+{% block headerRight %}
+{% endblock %}
+
+{% block fullPane %}
+  {% include 'panes/adminAISettingsForm.html' %}
+{% endblock %}
+
+{% block footer %}
+  <span id="ai-settings-test-url" data-url="/admin-tools/ai-settings/test" style="display: none;"></span>
+  <script>
+    $(document).ready(function () {
+      $('#aiSettingsTest').click(function (e) {
+        e.preventDefault();
+        var $btn = $(this);
+        var $result = $('#aiSettingsTestResult');
+        $btn.prop('disabled', true);
+        $result.removeClass('text-success text-danger').text('Testing…');
+        $.ajax({
+          url: $('#ai-settings-test-url').data('url'),
+          type: 'POST',
+          success: function (data) {
+            $result.addClass('text-success').text('Success: ' + ((data && data.reply) || 'OK'));
+          },
+          error: function (xhr) {
+            var msg = 'Test failed';
+            try { msg = JSON.parse(xhr.responseText).error || msg; } catch (err) {}
+            $result.addClass('text-danger').text(msg);
+          },
+          complete: function () { $btn.prop('disabled', false); }
+        });
+      });
+    });
+  </script>
+{% endblock %}

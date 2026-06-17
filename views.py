@@ -53,6 +53,7 @@ from writehat.lib.pageTemplate import *
 from writehat.lib.findingCategory import *
 from writehat.lib.engagementFinding import *
 from writehat.lib.excel import generateExcel
+from writehat.lib import ai
 
 
 
@@ -221,7 +222,7 @@ def reportEdit(request,uuid):
             "report": report,
             "engagement": report.engagement,
             "componentsList": settings.VALID_COMPONENTS,
-            "ai_enabled": settings.AI_ENABLED,
+            "ai_enabled": ai.is_enabled(),
 
         })
 
@@ -293,7 +294,7 @@ def componentEdit(request,uuid,form=None):
     #except:
     #return HttpResponse('Security Violation!')
 
-    return render(request,"pages/componentEdit.html", {"component": component, "ai_enabled": settings.AI_ENABLED})
+    return render(request,"pages/componentEdit.html", {"component": component, "ai_enabled": ai.is_enabled()})
 
 
 
@@ -331,7 +332,7 @@ def componentSave(request,uuid):
 
         message = "Sucessfully Saved!"
         log.debug("Rendering response")
-        return render(request,"pages/componentEdit.html", {"component": component, "ai_enabled": settings.AI_ENABLED})
+        return render(request,"pages/componentEdit.html", {"component": component, "ai_enabled": ai.is_enabled()})
 
     except ComponentFormError:
         response = HttpResponse('Invalid Form')
@@ -1932,7 +1933,7 @@ def engagementFindingEdit(request, uuid):
             {
                 'finding': finding,
                 'previewURL': f'/engagements/fgroup/finding/preview/{finding.id}',
-                'ai_enabled': settings.AI_ENABLED,
+                'ai_enabled': ai.is_enabled(),
             }
         )
 
@@ -2609,6 +2610,76 @@ def admintoolsHome(request):
     log.debug(f"adminHome called")
     users = User.objects.order_by('username')
     return render(request,"pages/admin.html",{'users': users})
+
+
+@user_passes_test(lambda u: u.is_superuser)
+@csrf_protect
+@require_http_methods(['GET', 'POST'])
+def adminAISettings(request):
+    '''Runtime-editable AI assistant settings (superuser only).'''
+    from writehat.models import AISettings
+    cfg = AISettings.load()
+
+    if request.method == 'GET':
+        return render(request, 'pages/adminAISettings.html', {'cfg': cfg, 'errors': []})
+
+    errors = []
+    cfg.enabled = request.POST.get('enabled') == 'on'
+    cfg.base_url = (request.POST.get('base_url') or '').strip()
+    cfg.model_name = (request.POST.get('model_name') or '').strip()
+    cfg.verify_ssl = request.POST.get('verify_ssl') == 'on'
+    cfg.system_prompt = request.POST.get('system_prompt') or ''
+
+    def _num(name, caster, current, label):
+        raw = (request.POST.get(name) or '').strip()
+        if raw == '':
+            return current
+        try:
+            return caster(raw)
+        except (TypeError, ValueError):
+            errors.append(f'{label} must be a number.')
+            return current
+
+    cfg.temperature = _num('temperature', float, cfg.temperature, 'Temperature')
+    cfg.max_tokens = _num('max_tokens', int, cfg.max_tokens, 'Max tokens')
+    cfg.timeout = _num('timeout', int, cfg.timeout, 'Timeout')
+
+    # API key: a blank field keeps the stored value; the clear checkbox removes it
+    if request.POST.get('clear_api_key') == 'on':
+        cfg.api_key = ''
+    else:
+        new_key = (request.POST.get('api_key') or '').strip()
+        if new_key:
+            cfg.api_key = new_key
+
+    if cfg.enabled and (not cfg.base_url or not cfg.model_name):
+        errors.append('A base URL and model are required to enable the assistant.')
+
+    if errors:
+        return render(request, 'pages/adminAISettings.html', {'cfg': cfg, 'errors': errors}, status=400)
+
+    cfg.configured = True
+    cfg.save()
+    messages.success(request, 'AI settings saved.')
+    return redirect('/admin-tools/ai-settings')
+
+
+@user_passes_test(lambda u: u.is_superuser)
+@csrf_protect
+@require_http_methods(['POST'])
+def adminAISettingsTest(request):
+    '''Send a tiny request to the saved endpoint and report the result.'''
+    if not ai.is_enabled():
+        return _ai_json_error('Enable and save the assistant first (a base URL and model are required).', status=400)
+    try:
+        reply = ai.chat(
+            [{'role': 'user', 'content': 'Reply with the single word: OK'}],
+            max_tokens=5,
+            temperature=0,
+        )
+    except ai.AIError as e:
+        return _ai_json_error(str(e), status=502)
+    return JsonResponse({'ok': True, 'reply': (reply or '')[:200]})
 
 
 @user_passes_test(lambda u: u.is_superuser)
