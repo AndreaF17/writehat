@@ -502,9 +502,9 @@ class BaseReport(WriteHatBaseModel):
         return clonedReport
 
 
-    def render(self):
+    def render(self, language=None):
 
-        rendered_components = self.renderComponents()
+        rendered_components = self.renderComponents(language=language)
         master_template = get_template('reportTemplates/reportBase.html')
 
         rendered = master_template.render({ 
@@ -525,7 +525,11 @@ class BaseReport(WriteHatBaseModel):
 
         return [component.render({'report': self}) for component in self]
     '''
-    def renderComponents(self):
+    def renderComponents(self, language=None):
+
+        from writehat.lib import ai
+        source_language = (getattr(self, 'defaultLanguage', 'en') or 'en')
+        do_translate = bool(language) and language != source_language and ai.is_enabled()
 
         rendered_components = {
             "components": [],
@@ -538,9 +542,12 @@ class BaseReport(WriteHatBaseModel):
                 component.pageBreakBefore = False
 
             rendered_components["component_css"].append(component.type)
-            rendered_components["components"].append(component.render({
+            html = component.render({
                 'report': self
-            }))
+            })
+            if do_translate:
+                html = ai.translate_html(html, target_language=language, source_language=source_language)
+            rendered_components["components"].append(html)
 
         return rendered_components
 
@@ -621,9 +628,9 @@ class Report(BaseReport):
     # JSON-serialized list of finding UUIDs
     _findings = models.TextField(blank=True, default=str, validators=[isValidJSON])
 
-    def render(self):
+    def render(self, language=None):
 
-        rendered_components = self.renderComponents()
+        rendered_components = self.renderComponents(language=language)
         master_template = get_template('reportTemplates/reportBase.html')
         # Note: {{ pageFooter }} must occur before rendered components in
         # reportBase.html or it will only appear on the last page. To edit
@@ -786,7 +793,11 @@ class Report(BaseReport):
         return self._pageTemplate_object
 
 
-    def renderComponents(self):
+    def renderComponents(self, language=None):
+
+        from writehat.lib import ai
+        source_language = (getattr(self, 'defaultLanguage', 'en') or 'en')
+        do_translate = bool(language) and language != source_language and ai.is_enabled()
 
         rendered_components = {
             "components": [],
@@ -801,10 +812,13 @@ class Report(BaseReport):
             if component.type not in rendered_components["component_css"]:
                 rendered_components["component_css"].append(component.type)
 
-            rendered_components["components"].append(component.render({
+            html = component.render({
                 'engagement': self.engagement,
                 'report': self
-            }))
+            })
+            if do_translate:
+                html = ai.translate_html(html, target_language=language, source_language=source_language)
+            rendered_components["components"].append(html)
 
         return rendered_components
 

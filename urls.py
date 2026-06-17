@@ -111,6 +111,8 @@ urlpatterns = [
     url(rf'^engagements/{uuid}/excel$', views.engagementFindingExcel),
     
     url(rf'^engagements/fgroup/finding/edit/{uuid}$', views.engagementFindingEdit),
+    url(rf'^engagements/fgroup/finding/generate/{uuid}$', views.engagementFindingGenerate),
+    url(rf'^engagements/fgroup/finding/aiprompt/{uuid}$', views.engagementFindingAiPrompt),
     url(rf'^engagements/fgroup/finding/preview/{uuid}$', views.engagementFindingPreview),
     url(rf'^engagements/fgroup/finding/delete/{uuid}$', views.engagementFindingDelete),
     url(rf'^engagements/fgroup/{fgroup}/finding/import/{uuid}$', views.engagementFindingImport),
@@ -133,6 +135,8 @@ urlpatterns = [
     url(rf'^components/{uuid}/edit$', views.componentEdit),
     url(rf'^components/{uuid}/update$', views.componentSave),
     url(rf'^components/{uuid}/status/update$', views.componentStatusUpdate),
+    url(rf'^components/{uuid}/generate$', views.componentGenerate),
+    url(rf'^components/{uuid}/aiprompt$', views.componentAiPrompt),
 
     # Report urls
     path('engagements/report', views.reportsHome),

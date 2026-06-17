@@ -90,6 +90,9 @@ class BaseComponent():
         'showTitle': BoolField(templatable=True),
         'editable': BoolField(templatable=True, default=True),
         'reviewStatus': ReviewStatusField(templatable=False),
+        # Per-instance AI prompt overrides: { fieldName: instruction }.
+        # Templatable so prompts defined on a template carry into reports.
+        'aiPrompts': DictField(templatable=True),
     }
 
 
@@ -559,6 +562,88 @@ class BaseComponent():
         # these ones are specific to the component
         validFields.update(cls.fieldList)
         return validFields
+
+
+    # ----- AI assistant helpers -------------------------------------------
+
+    def _fieldLabel(self, fieldName):
+        '''Human label for a field, preferring the form label if present.'''
+        try:
+            label = self.form.fields[fieldName].label
+            if label:
+                return str(label)
+        except (KeyError, AttributeError):
+            pass
+        return fieldName
+
+
+    def _aiPromptOverrides(self):
+        '''Per-instance { fieldName: prompt } overrides stored on the model.'''
+        overrides = self._model.get('aiPrompts', {})
+        return overrides if isinstance(overrides, dict) else {}
+
+
+    def effectiveAiPrompt(self, fieldName):
+        '''
+        Resolve the AI prompt for a field: a per-instance override wins,
+        otherwise the field's code-level default (StringField(aiPrompt=...)).
+        '''
+        override = self._aiPromptOverrides().get(fieldName, '')
+        if override and str(override).strip():
+            return str(override)
+        field = self.validFields().get(fieldName)
+        return str(getattr(field, 'aiPrompt', '') or '')
+
+
+    def setAiPrompt(self, fieldName, prompt):
+        '''Store (or clear, if blank) a per-instance prompt override.'''
+        overrides = dict(self._aiPromptOverrides())
+        if prompt and str(prompt).strip():
+            overrides[fieldName] = str(prompt)
+        else:
+            overrides.pop(fieldName, None)
+        self._model['aiPrompts'] = overrides
+
+
+    @property
+    def aiMarkdownFields(self):
+        '''Names of markdown fields eligible for AI drafting, in order.'''
+        return [
+            name for name, field in self.fieldList.items()
+            if getattr(field, 'markdown', False)
+        ]
+
+
+    @property
+    def aiFields(self):
+        '''Editor metadata: { fieldName: {label, prompt, hasOverride} }.'''
+        overrides = self._aiPromptOverrides()
+        out = {}
+        for name in self.aiMarkdownFields:
+            out[name] = {
+                'label': self._fieldLabel(name),
+                'prompt': self.effectiveAiPrompt(name),
+                'hasOverride': bool(overrides.get(name)),
+            }
+        return out
+
+
+    def aiContextItems(self, excludeField=None):
+        '''
+        Gather this component's own content as (label, value) context for the
+        model, excluding the field currently being generated.
+        '''
+        items = []
+        name = self._model.get('name', '')
+        if name:
+            items.append(('Section title', str(name)))
+        for fieldName in self.aiMarkdownFields:
+            if fieldName == excludeField:
+                continue
+            value = self._model.get(fieldName, '')
+            if value and str(value).strip():
+                items.append((self._fieldLabel(fieldName), str(value)))
+        return items
 
 
 

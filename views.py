@@ -221,6 +221,7 @@ def reportEdit(request,uuid):
             "report": report,
             "engagement": report.engagement,
             "componentsList": settings.VALID_COMPONENTS,
+            "ai_enabled": settings.AI_ENABLED,
 
         })
 
@@ -292,7 +293,7 @@ def componentEdit(request,uuid,form=None):
     #except:
     #return HttpResponse('Security Violation!')
 
-    return render(request,"pages/componentEdit.html", {"component": component})
+    return render(request,"pages/componentEdit.html", {"component": component, "ai_enabled": settings.AI_ENABLED})
 
 
 
@@ -330,17 +331,115 @@ def componentSave(request,uuid):
 
         message = "Sucessfully Saved!"
         log.debug("Rendering response")
-        return render(request,"pages/componentEdit.html", {"component": component})
+        return render(request,"pages/componentEdit.html", {"component": component, "ai_enabled": settings.AI_ENABLED})
 
     except ComponentFormError:
         response = HttpResponse('Invalid Form')
         response.status_code = 400
         return response  
 
-    except ComponentError: 
+    except ComponentError:
         response = HttpResponse('Invalid Component')
         response.status_code = 500
         return response
+
+
+# ---------------------------------------------------------------------------
+# AI assistant: draft a component field and manage per-field prompts
+# ---------------------------------------------------------------------------
+
+def _ai_json_error(message, status=400):
+    response = JsonResponse({'error': message})
+    response.status_code = status
+    return response
+
+
+def _ai_request_value(request, key):
+    '''Read a value from a form-encoded POST or a JSON request body.'''
+    if key in request.POST:
+        return request.POST.get(key)
+    try:
+        body = json.loads(request.body.decode('utf-8'))
+        if isinstance(body, dict):
+            return body.get(key)
+    except (ValueError, AttributeError, UnicodeDecodeError):
+        pass
+    return None
+
+
+@csrf_protect
+@require_http_methods(['POST'])
+def componentGenerate(request, uuid):
+    '''
+    Draft a single markdown field of a component with the AI assistant.
+    Body (form or JSON): { "field": "<fieldName>" }.
+    Returns: { "text": "<generated markdown>", "field": "<fieldName>" }.
+    '''
+    from writehat.lib import ai
+
+    if not ai.is_enabled():
+        return _ai_json_error('The AI assistant is not enabled on this server.', status=503)
+
+    try:
+        component = BaseComponent.get(uuid)
+    except ComponentError:
+        return _ai_json_error('Invalid component.', status=404)
+
+    if _component_locked_in_report(component):
+        return _ai_json_error('This component is locked by the template and cannot be edited.', status=403)
+
+    field = _ai_request_value(request, 'field')
+    if not field or field not in component.aiMarkdownFields:
+        return _ai_json_error('Unknown or non-AI field.', status=400)
+
+    try:
+        language = component.report.defaultLanguage or 'en'
+    except Exception:
+        language = 'en'
+
+    try:
+        text = ai.generate_field(
+            field_label=component._fieldLabel(field),
+            system_prompt=component.effectiveAiPrompt(field),
+            context_items=component.aiContextItems(excludeField=field),
+            language=language,
+            existing_text=str(component._model.get(field, '') or ''),
+        )
+    except ai.AIError as e:
+        return _ai_json_error(str(e), status=502)
+
+    return JsonResponse({'text': text, 'field': field})
+
+
+@csrf_protect
+@require_http_methods(['POST'])
+def componentAiPrompt(request, uuid):
+    '''
+    Save (or clear, if blank) a per-instance AI prompt override for a field.
+    Body (form or JSON): { "field": "<fieldName>", "prompt": "<instruction>" }.
+    '''
+    try:
+        component = BaseComponent.get(uuid)
+    except ComponentError:
+        return _ai_json_error('Invalid component.', status=404)
+
+    if _component_locked_in_report(component):
+        return _ai_json_error('This component is locked by the template and cannot be edited.', status=403)
+
+    field = _ai_request_value(request, 'field')
+    if not field or field not in component.aiMarkdownFields:
+        return _ai_json_error('Unknown or non-AI field.', status=400)
+
+    prompt = _ai_request_value(request, 'prompt') or ''
+    component.setAiPrompt(field, prompt)
+    component.save(updateTimestamp=False)
+
+    return JsonResponse({
+        'field': field,
+        'prompt': component.effectiveAiPrompt(field),
+        'hasOverride': bool(component._aiPromptOverrides().get(field)),
+    })
+
 
 # The handler for updating a component's status field
 @csrf_protect
@@ -795,8 +894,14 @@ def reportClone(request,uuid):
 # GET the report ID from the URL
 def reportGenerate(request,uuid):
     '''
-    Render/preview a Report, SavedReport, or Component
+    Render/preview a Report, SavedReport, or Component.
+    An optional ?lang=<code> query param requests a translated render (export
+    time); it is ignored if it does not differ from the report's source language.
     '''
+
+    language = request.GET.get('lang') or None
+    if language is not None and language not in [c[0] for c in Report.defaultLanguageChoices]:
+        language = None
 
     try:
         # TODO: Make 'page-break' div between sections optional (perhaps by
@@ -807,7 +912,7 @@ def reportGenerate(request,uuid):
         except Report.DoesNotExist:
             report = SavedReport.get(id=uuid)
 
-        return HttpResponse(report.render(), content_type='text/html; charset=utf-8')
+        return HttpResponse(report.render(language=language), content_type='text/html; charset=utf-8')
 
     except SavedReport.DoesNotExist:
         log.debug("UUID did not match any reports; trying components")
@@ -824,8 +929,8 @@ def reportGenerate(request,uuid):
             report = SavedReport.get(id=component.reportParent)
         components = [component]
         report.components = components
-        response = HttpResponse(report.render(), content_type='text/html; charset=utf-8')
-        return response 
+        response = HttpResponse(report.render(language=language), content_type='text/html; charset=utf-8')
+        return response
 
 
 # load the new database finding form with the cvss form
@@ -1826,7 +1931,8 @@ def engagementFindingEdit(request, uuid):
             "pages/engagementFindingEdit.html",
             {
                 'finding': finding,
-                'previewURL': f'/engagements/fgroup/finding/preview/{finding.id}'
+                'previewURL': f'/engagements/fgroup/finding/preview/{finding.id}',
+                'ai_enabled': settings.AI_ENABLED,
             }
         )
 
@@ -1835,6 +1941,69 @@ def engagementFindingEdit(request, uuid):
         finding.updateFromPostData(request.POST,finding.formClass)
         finding.save()
         return HttpResponse(finding.id)
+
+
+@csrf_protect
+@require_http_methods(['POST'])
+def engagementFindingGenerate(request, uuid):
+    '''
+    Draft a single markdown field of an engagement finding with the AI assistant.
+    Body (form or JSON): { "field": "<fieldName>" }.
+    Returns: { "text": "<generated markdown>", "field": "<fieldName>" }.
+    '''
+    from writehat.lib import ai
+
+    if not ai.is_enabled():
+        return _ai_json_error('The AI assistant is not enabled on this server.', status=503)
+
+    try:
+        finding = EngagementFinding.get_child(uuid)
+    except (FindingError, EngagementError):
+        return _ai_json_error('Invalid finding.', status=404)
+
+    field = _ai_request_value(request, 'field')
+    if not field or field not in finding.aiMarkdownFields:
+        return _ai_json_error('Unknown or non-AI field.', status=400)
+
+    try:
+        text = ai.generate_field(
+            field_label=finding._aiFieldLabel(field),
+            system_prompt=finding.effectiveAiPrompt(field),
+            context_items=finding.aiContextItems(excludeField=field),
+            language='en',
+            existing_text=str(getattr(finding, field, '') or ''),
+        )
+    except ai.AIError as e:
+        return _ai_json_error(str(e), status=502)
+
+    return JsonResponse({'text': text, 'field': field})
+
+
+@csrf_protect
+@require_http_methods(['POST'])
+def engagementFindingAiPrompt(request, uuid):
+    '''
+    Save (or clear, if blank) a per-instance AI prompt override for a finding field.
+    Body (form or JSON): { "field": "<fieldName>", "prompt": "<instruction>" }.
+    '''
+    try:
+        finding = EngagementFinding.get_child(uuid)
+    except (FindingError, EngagementError):
+        return _ai_json_error('Invalid finding.', status=404)
+
+    field = _ai_request_value(request, 'field')
+    if not field or field not in finding.aiMarkdownFields:
+        return _ai_json_error('Unknown or non-AI field.', status=400)
+
+    prompt = _ai_request_value(request, 'prompt') or ''
+    finding.setAiPrompt(field, prompt)
+    finding.save()
+
+    return JsonResponse({
+        'field': field,
+        'prompt': finding.effectiveAiPrompt(field),
+        'hasOverride': bool(finding._aiPromptOverrides().get(field)),
+    })
 
 
 # Deletes the engagementFinding with the specified UUID

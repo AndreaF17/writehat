@@ -242,6 +242,61 @@ MONGO_DB = get_db_obj(
 COMPONENT_CLASSES = getComponentList()
 VALID_COMPONENTS = getComponentListJSON()
 
+# ---------------------------------------------------------------------------
+# AI assistant (optional)
+# OpenAI-compatible Chat Completions API (e.g. a self-hosted Open WebUI).
+# Used to draft report content and, later, translate at export time.
+# Disabled by default. Configure via the [ai] section of config/writehat.conf
+# or override any value with the matching WRITEHAT_AI_* environment variable.
+# ---------------------------------------------------------------------------
+AI_CONFIG = writehat_config.get('ai', {})
+
+
+def _ai_setting(env_key, conf_key, default):
+    '''Environment variable wins over writehat.conf, which wins over default.'''
+    val = os.environ.get(env_key)
+    if val is not None and str(val).strip() != '':
+        return val
+    return AI_CONFIG.get(conf_key, default)
+
+
+def _ai_bool(value):
+    return str(value).strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+AI_ENABLED = _ai_bool(_ai_setting('WRITEHAT_AI_ENABLED', 'enabled', False))
+AI_BASE_URL = str(_ai_setting('WRITEHAT_AI_BASE_URL', 'base_url', '')).rstrip('/')
+AI_API_KEY = str(_ai_setting('WRITEHAT_AI_API_KEY', 'api_key', ''))
+AI_MODEL = str(_ai_setting('WRITEHAT_AI_MODEL', 'model', ''))
+AI_VERIFY_SSL = _ai_bool(_ai_setting('WRITEHAT_AI_VERIFY_SSL', 'verify_ssl', True))
+
+try:
+    AI_TIMEOUT = int(_ai_setting('WRITEHAT_AI_TIMEOUT', 'timeout', 60))
+except (TypeError, ValueError):
+    AI_TIMEOUT = 60
+
+try:
+    AI_TEMPERATURE = float(_ai_setting('WRITEHAT_AI_TEMPERATURE', 'temperature', 0.2))
+except (TypeError, ValueError):
+    AI_TEMPERATURE = 0.2
+
+try:
+    AI_MAX_TOKENS = int(_ai_setting('WRITEHAT_AI_MAX_TOKENS', 'max_tokens', 1200))
+except (TypeError, ValueError):
+    AI_MAX_TOKENS = 1200
+
+# Baseline system prompt prepended to every request. Per-field and per-component
+# prompts are layered on top of this (see writehat.lib.ai.build_messages).
+AI_DEFAULT_SYSTEM_PROMPT = str(_ai_setting(
+    'WRITEHAT_AI_SYSTEM_PROMPT', 'system_prompt',
+    "You are a senior penetration tester writing a professional security "
+    "assessment report. Write clear, concise, technically accurate prose in "
+    "Markdown. Use ONLY the facts provided in the context; never invent "
+    "hostnames, URLs, IP addresses, credentials, software versions, CVE IDs or "
+    "evidence. Do not state CVSS scores or severity ratings unless they are "
+    "explicitly given. Output only the requested content, with no preamble."
+))
+
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 

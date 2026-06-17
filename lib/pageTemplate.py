@@ -174,7 +174,7 @@ class PageTemplateForm(forms.Form):
     )
 
     logoImageID = forms.UUIDField(
-        label='Company Logo',
+        label='Top Right Logo',
         widget=ImageSelect,
         required=False
     )

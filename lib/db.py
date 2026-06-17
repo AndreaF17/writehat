@@ -23,13 +23,17 @@ class BaseField():
     '''
     _defaultValue = None
 
-    def __init__(self, templatable=False, default=None):
+    def __init__(self, templatable=False, default=None, aiPrompt=''):
 
         if default is not None:
             self.defaultValue = default
         else:
             self.defaultValue = self._defaultValue
         self.templatable = templatable
+        # Optional default instruction for the AI assistant when drafting this
+        # field. Acts as the code-level / template default; per-instance values
+        # stored on the component (aiPrompts) override it.
+        self.aiPrompt = aiPrompt
 
 
 class StringField(BaseField):
@@ -50,6 +54,23 @@ class BoolField(BaseField):
 class IntField(BaseField):
 
     _defaultValue = 0
+
+
+class DictField(BaseField):
+    '''
+    A field whose value is a JSON object (dict).
+    Hands out a fresh empty dict on every access so the shared class-level
+    default can never be mutated by one component instance.
+    '''
+
+    def __init__(self, templatable=False, aiPrompt=''):
+        self.templatable = templatable
+        self.aiPrompt = aiPrompt
+
+    @property
+    def defaultValue(self):
+        return {}
+
 
 class ForeignKeyField(BaseField, models.ForeignKey):
 

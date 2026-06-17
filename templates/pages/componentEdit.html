@@ -26,5 +26,13 @@
   <span id="report-info" report-id="{{ component.report.id }}" style="display: none;"></span>
   <span id="component-info" component-type="{{ component.type }}" component-id="{{ component.id }}" style="display: none;"></span>
   <span id="timestamp-check" object-id="{{ component.id }}" hint="component" button="componentUpdate"></span>
+  <span id="ai-config"
+        data-enabled="{{ ai_enabled|yesno:'true,false' }}"
+        data-generate-url="/components/{{ component.id }}/generate"
+        data-prompt-url="/components/{{ component.id }}/aiprompt"
+        data-save-selector="#componentUpdate"
+        style="display: none;"></span>
+  {{ component.aiFields|json_script:"ai-fields-data" }}
   <script src="/static/js/componentEdit.js?v=2"></script>
+  {% if ai_enabled %}<script src="/static/js/aiAssist.js?v=2"></script>{% endif %}
 {% endblock %}

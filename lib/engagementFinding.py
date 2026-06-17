@@ -161,6 +161,8 @@ class DREADEngagementFinding(EngagementFinding, DREADFinding):
     descExploitability = MarkdownField(max_length=30000, null=True, blank=True)
     descAffectedUsers = MarkdownField(max_length=30000, null=True, blank=True)
     descDiscoverability = MarkdownField(max_length=30000, null=True, blank=True)
+    # Internal-only scratch notes that feed the AI assistant (see CVSS class).
+    notes = models.TextField(blank=True, null=True, default=str)
     formClass = DREADEngagementFindingForm
 
 
@@ -230,6 +232,10 @@ class CVSSEngagementFinding(EngagementFinding, CVSSFinding):
     description = MarkdownField(max_length=30000, null=True, blank=True)
     affectedResources = MarkdownField(max_length=30000, null=True, blank=True)
     proofOfConcept = MarkdownField(max_length=30000, null=True, blank=True)
+    # Internal-only scratch notes that feed the AI assistant; never rendered or
+    # exported. Plain TextField so it is excluded from markdown/figure/revision
+    # handling.
+    notes = models.TextField(blank=True, null=True, default=str)
     formClass = CVSSEngagementFindingForm
 
 
@@ -269,6 +275,8 @@ class CVSS4EngagementFinding(EngagementFinding, CVSS4Finding):
     description = MarkdownField(max_length=30000, null=True, blank=True)
     affectedResources = MarkdownField(max_length=30000, null=True, blank=True)
     proofOfConcept = MarkdownField(max_length=30000, null=True, blank=True)
+    # Internal-only scratch notes that feed the AI assistant (see CVSS class).
+    notes = models.TextField(blank=True, null=True, default=str)
     formClass = CVSS4EngagementFindingForm
 
     @property
@@ -287,6 +295,8 @@ class ProactiveEngagementFinding(EngagementFinding, ProactiveFinding):
     findingGroup = models.UUIDField(editable=False, null=True)
     description = MarkdownField(max_length=30000, null=True, blank=True)
     affectedResources = MarkdownField(max_length=30000, null=True, blank=True)
+    # Internal-only scratch notes that feed the AI assistant (see CVSS class).
+    notes = models.TextField(blank=True, null=True, default=str)
     formClass = ProactiveEngagementFindingForm
 
     @property

@@ -157,6 +157,14 @@ $(document).ready(function() {
     window.open(url, '_blank');
   })
 
+  // Translate dropdown: open a translated HTML render in a new tab
+  $('.report-translate-lang').click(function(e) {
+    e.preventDefault();
+    var lang = $(this).attr('data-lang');
+    var url = '/engagements/report/' + reportID + '/generate?lang=' + encodeURIComponent(lang);
+    window.open(url, '_blank');
+  })
+
   // saveToTemplate button
   $('#saveToTemplate').click(function() {
     $.ajax({url: '/engagements/report/' + reportID + '/saveToTemplate', 

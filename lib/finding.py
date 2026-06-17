@@ -1,3 +1,4 @@
+import json
 import logging
 from django.db import models
 from writehat.models import *
@@ -14,6 +15,22 @@ from writehat.lib.revision import Revision
 
 log = logging.getLogger(__name__)
 todo_re = r"\{\s{0,2}[Tt][Oo][Dd][Oo](?P<todo_note>[|][^}]+)?\s{0,2}\}"
+
+# Human labels for finding fields the AI assistant can draft
+AI_FIELD_LABELS = {
+    'description': 'Description',
+    'affectedResources': 'Affected Resources',
+    'proofOfConcept': 'Proof of Concept',
+    'background': 'Background',
+    'remediation': 'Remediation',
+    'references': 'References',
+    'toolsUsed': 'Tools Used',
+    'descDamage': 'Damage Detail',
+    'descReproducibility': 'Reproducibility Detail',
+    'descExploitability': 'Exploitability Detail',
+    'descAffectedUsers': 'Affected Users Detail',
+    'descDiscoverability': 'Discoverability Detail',
+}
 
 
 class CVSS4LegacyAdapter:
@@ -45,6 +62,26 @@ class BaseDatabaseFinding(WriteHatBaseModel):
     background = MarkdownField(max_length=30000, null=True, blank=True)
     remediation = MarkdownField(max_length=30000, null=True, blank=True)
     references = MarkdownField(max_length=30000, null=True, blank=True)
+
+    # JSON-encoded per-field AI prompt overrides: { fieldName: instruction }.
+    # On the library finding these act as defaults; they are copied into the
+    # engagement finding on clone(), where they can be overridden per instance.
+    aiPrompts = models.TextField(default='{}', blank=True, null=True)
+
+    # Code-level default AI prompts per field (library defaults). A per-instance
+    # value in the aiPrompts column takes precedence over these.
+    aiFieldPrompts = {
+        'description': 'Describe the vulnerability: what it is, exactly where it '
+                       'was found, and its concrete security impact. Be specific '
+                       'and technical.',
+        'proofOfConcept': 'Write clear, numbered, reproducible proof-of-concept '
+                          'steps, based strictly on the tester notes and evidence '
+                          'provided. Do not invent steps, payloads or endpoints.',
+        'remediation': 'Give concrete, actionable remediation guidance to fix the '
+                       'vulnerability, ordered from most to least effective.',
+        'affectedResources': 'List the affected hosts, URLs, endpoints or '
+                             'components, taken only from the provided context.',
+    }
 
     # Overridden by child class
     scoringType = models.CharField(default='None', max_length=50)
@@ -240,6 +277,97 @@ class BaseDatabaseFinding(WriteHatBaseModel):
             except AttributeError:
                 continue
         return out
+
+
+    # ----- AI assistant helpers -------------------------------------------
+
+    def _aiPromptOverrides(self):
+        '''Per-instance { fieldName: prompt } overrides from the aiPrompts column.'''
+        try:
+            data = json.loads(self.aiPrompts or '{}')
+            return data if isinstance(data, dict) else {}
+        except (ValueError, TypeError):
+            return {}
+
+
+    def effectiveAiPrompt(self, fieldName):
+        '''Instance override (aiPrompts column) wins, else the code-level default.'''
+        override = self._aiPromptOverrides().get(fieldName, '')
+        if override and str(override).strip():
+            return str(override)
+        return str(self.aiFieldPrompts.get(fieldName, '') or '')
+
+
+    def setAiPrompt(self, fieldName, prompt):
+        '''Store (or clear, if blank) a per-instance prompt override.'''
+        overrides = dict(self._aiPromptOverrides())
+        if prompt and str(prompt).strip():
+            overrides[fieldName] = str(prompt)
+        else:
+            overrides.pop(fieldName, None)
+        self.aiPrompts = json.dumps(overrides)
+
+
+    def _aiFieldLabel(self, fieldName):
+        return AI_FIELD_LABELS.get(fieldName, fieldName.replace('_', ' ').title())
+
+
+    @property
+    def aiMarkdownFields(self):
+        '''Markdown fields the AI can draft (excludes the plain-text notes field).'''
+        names = []
+        for f in self._meta.get_fields():
+            if getattr(f, 'markdown', False):
+                names.append(f.name)
+        return names
+
+
+    @property
+    def aiFields(self):
+        '''Editor metadata: { fieldName: {label, prompt, hasOverride} }.'''
+        overrides = self._aiPromptOverrides()
+        out = {}
+        for name in self.aiMarkdownFields:
+            out[name] = {
+                'label': self._aiFieldLabel(name),
+                'prompt': self.effectiveAiPrompt(name),
+                'hasOverride': bool(overrides.get(name)),
+            }
+        return out
+
+
+    def aiContextItems(self, excludeField=None):
+        '''
+        Structured context for the model: title, category, severity, vector, the
+        internal tester notes, and the finding's other prose fields (excluding the
+        field being generated).
+        '''
+        items = []
+        if getattr(self, 'name', ''):
+            items.append(('Finding title', str(self.name)))
+        try:
+            items.append(('Category', self.categoryFull))
+        except Exception:
+            pass
+        try:
+            severity = self.severity
+            if severity:
+                items.append(('Severity', str(severity)))
+        except Exception:
+            pass
+        vector = getattr(self, 'vector', None)
+        if vector:
+            items.append(('Scoring vector', str(vector)))
+        notes = getattr(self, 'notes', '')
+        if notes and str(notes).strip():
+            items.append(('Tester notes', str(notes)))
+        for name in self.aiMarkdownFields:
+            if name == excludeField:
+                continue
+            value = getattr(self, name, '')
+            if value and str(value).strip():
+                items.append((self._aiFieldLabel(name), str(value)))
+        return items
 
 
 class DREADFinding(BaseDatabaseFinding):

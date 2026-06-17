@@ -20,7 +20,14 @@
   <body>
     <template id='report-body'>
       {% if report.tlpDisplay %}
-        <span class="tlp-content {{ report.tlpCssClass }}">{{ report.tlpMarking }}</span>
+        <div class="page-header-left-content">
+          <span class="tlp-content {{ report.tlpCssClass }}">{{ report.tlpMarking }}</span>
+        </div>
+      {% endif %}
+      {% if report.pageTemplate.logoImageID %}
+        <div class="page-header-right-content">
+          <img class="page-header-logo" src="/images/{{ report.pageTemplate.logoImageID }}" alt="Page logo">
+        </div>
       {% endif %}
       <div class="center header-content">
         {% markdown header %}

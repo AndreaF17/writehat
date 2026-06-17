@@ -1,0 +1,5 @@
+{% for code, label in report.defaultLanguageChoices %}
+  <a class="dropdown-item report-translate-lang" href="#" data-lang="{{ code }}">
+    {{ label }}{% if code == report.defaultLanguage %} <small class="text-muted">(source)</small>{% endif %}
+  </a>
+{% endfor %}

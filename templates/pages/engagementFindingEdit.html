@@ -45,6 +45,14 @@
   <span id="engagement-info" engagement-id="{{ finding.fgroup.engagementParent }}" style="display: none;"></span>
   <span id="timestamp-check" object-id="{{ finding.id }}" hint="engagement finding" button="findingSave"></span>
   <span id="fgroup-info" fgroup-type="{{ finding.fgroup.scoringType }}" fgroup-name="{{ finding.fgroup.name }}" fgroup-id="{{ finding.fgroup.id }}" style="display: none;"></span>
+  <span id="ai-config"
+        data-enabled="{{ ai_enabled|yesno:'true,false' }}"
+        data-generate-url="/engagements/fgroup/finding/generate/{{ finding.id }}"
+        data-prompt-url="/engagements/fgroup/finding/aiprompt/{{ finding.id }}"
+        data-save-selector="#findingSave"
+        style="display: none;"></span>
+  {{ finding.aiFields|json_script:"ai-fields-data" }}
   <script src='/static/js/findingEdit.js'></script>
   <script src='/static/js/findingsBrowse.js'></script>
+  {% if ai_enabled %}<script src='/static/js/aiAssist.js?v=2'></script>{% endif %}
 {% endblock %}

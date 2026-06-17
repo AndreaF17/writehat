@@ -627,6 +627,11 @@ class EngagementFindingForm(forms.Form):
         widget=forms.Textarea(attrs={'class': 'finding-database-exclude'}),
         max_length=30000,
         required=False)
+    notes = forms.CharField(
+        label='Notes (internal - not shown in report)',
+        widget=forms.Textarea(attrs={'class': 'finding-database-exclude ai-notes-field'}),
+        max_length=30000,
+        required=False)
 
     def __init__(self, *args, **kwargs):
 
@@ -653,7 +658,7 @@ class EngagementFindingForm(forms.Form):
 class CVSSEngagementFindingForm(EngagementFindingForm,CVSSForm):
 
     findingGroup = forms.UUIDField(label='Finding Group',required=True)
-    field_order = ['name','findingGroup','categoryID','description','affectedResources','background','proofOfConcept','toolsUsed','remediation','references','cvssAV','cvssAC','cvssPR','cvssUI','cvssS','cvssC','cvssI','cvssA','cvssE','cvssRL','cvssRC','cvssCR','cvssIR','cvssAR','cvssMAV','cvssMAC','cvssMPR','cvssMUI','cvssMS','cvssMC','cvssMI','cvssMA',]
+    field_order = ['name','findingGroup','categoryID','description','affectedResources','notes','background','proofOfConcept','toolsUsed','remediation','references','cvssAV','cvssAC','cvssPR','cvssUI','cvssS','cvssC','cvssI','cvssA','cvssE','cvssRL','cvssRC','cvssCR','cvssIR','cvssAR','cvssMAV','cvssMAC','cvssMPR','cvssMUI','cvssMS','cvssMC','cvssMI','cvssMA',]
 
 
 class CVSS4EngagementFindingForm(EngagementFindingForm, CVSS4Form):
@@ -665,6 +670,7 @@ class CVSS4EngagementFindingForm(EngagementFindingForm, CVSS4Form):
         'categoryID',
         'description',
         'affectedResources',
+        'notes',
         'background',
         'proofOfConcept',
         'toolsUsed',
@@ -732,6 +738,7 @@ class DREADEngagementFindingForm(EngagementFindingForm,DREADForm):
         'categoryID',
         'description',
         'affectedResources',
+        'notes',
         'dreadImpact',
         'background',
         'remediation',
@@ -752,7 +759,7 @@ class DREADEngagementFindingForm(EngagementFindingForm,DREADForm):
 class ProactiveEngagementFindingForm(EngagementFindingForm,ProactiveForm):
 
     findingGroup = forms.UUIDField(label='Finding Group',required=True)
-    field_order = ['name','findingGroup','categoryID','description','affectedResources','background','references']
+    field_order = ['name','findingGroup','categoryID','description','affectedResources','notes','background','references']
 
 
 class CVSSDatabaseFindingForm(CVSSForm):

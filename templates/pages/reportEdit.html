@@ -9,6 +9,9 @@
 {% block headerRight %}
 
   {% include 'snippets/textButton.html' with name='HTML' id='reportGenerate' type='file-code' class='btn-light border border-warning' %}
+  {% if ai_enabled %}
+    {% include 'snippets/dropdownButton.html' with name='Translate' id='reportTranslate' type='language' class='btn-light border border-warning' contents='snippets/reportLanguageMenu.html' %}
+  {% endif %}
   {% include 'snippets/textButton.html' with name='Changelog' id='reportRevisions' type='code-branch' class='btn-light border border-success' %}
   {% include 'snippets/textButton.html' with name='Save to Template' id='saveToTemplate' type='copy' class='btn-light border border-primary' %}
   {% include 'snippets/textButton.html' with name='Select Findings' id='findingSelectButton' type='search' class='btn-warning' %}
